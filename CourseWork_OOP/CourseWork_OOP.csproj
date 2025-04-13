@@ -8,4 +8,11 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Google.Apis.Auth" Version="1.69.0" />
+    <PackageReference Include="Google.Apis.Docs.v1" Version="1.69.0.3701" />
+    <PackageReference Include="Google.Apis.Sheets.v4" Version="1.69.0.3694" />
+  </ItemGroup>
+
 </Project>

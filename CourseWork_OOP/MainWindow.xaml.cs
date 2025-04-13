@@ -38,5 +38,26 @@ namespace CourseWork_OOP
         public string? City { get; set; } = "Черкаси";
         public int Year { get; set; } = DateTime.Now.Year;
     }
+    public abstract class CoverPageGenerator
+    {
+        /// <summary>
+        /// Cover page data available for all derived classes.
+        /// </summary>
+        protected CoverPageData Data { get; }
 
+        /// <summary>
+        /// Constructor of the base class. Stores the transmitted data.
+        /// </summary>
+        /// <param name="data">Data for generating a cover title.</param>
+        /// <exception cref="ArgumentNullException">Occurs if the data is not provided (null).</exception>
+        protected CoverPageGenerator(CoverPageData data)
+        {
+            Data = data ?? throw new ArgumentNullException(nameof(data));
+        }
+        /// <summary>  
+        /// Method for generating a cover page.
+        /// </summary>
+        /// <param name="baseFileName"> Base file name </param>
+        public abstract Task GenerateAsync(string baseFileName);
+    }
 }
