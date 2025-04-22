@@ -69,7 +69,7 @@ namespace CourseWork_OOP.Services
             context.AppendLine("    <div class=\"work-title-line\">");
             context.AppendLine($"      <p class=\"work-type\">Курсова Робота</p>");
             context.AppendLine($"      <p class=\"discipline-name\">по дисципліні &laquo;{EncHtml(Data.Discipline, "Назва дисципліни")}&raquo;</p>");
-            context.AppendLine($"      <p class=\"topic-name\">На тему: &laquo;{EncHtml(Data.Topic, "Тема роботи")}&raquo;</p>"); // ДОДАНО
+            context.AppendLine($"      <p class=\"topic-name\">На тему: &laquo;{EncHtml(Data.Topic, "Тема роботи")}&raquo;</p>"); 
             context.AppendLine("    </div>");
 
             context.AppendLine("    <div class=\"executor-supervisor-block\">");
@@ -93,7 +93,7 @@ namespace CourseWork_OOP.Services
             context.AppendLine("        </div>");
             context.AppendLine("    </div>");
 
-            // --- Низ ---
+          
             context.AppendLine("    <div class=\"footer\">");
             context.AppendLine($"      <p>{EncHtml(Data.City, "Місто")}, {Data.Year}</p>");
             context.AppendLine("    </div>");
