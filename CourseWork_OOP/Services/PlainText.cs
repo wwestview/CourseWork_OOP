@@ -53,7 +53,11 @@ namespace CourseWork_OOP.Services
 
             context.AppendLine(CenterLine("Курсова Робота", consoleWidth, pageIndent));
             context.AppendLine(CenterLine($"по дисципліні «{GetText(Data.Discipline, "Об'єкто-орієнтоване програмування")}»", consoleWidth, pageIndent));
+<<<<<<< HEAD
             context.AppendLine(CenterLine($"На тему: «{GetText(Data.Topic, "Тема роботи")}»", consoleWidth, pageIndent)); // ДОДАНО
+=======
+            context.AppendLine(CenterLine($"На тему: «{GetText(Data.Topic, "Тема роботи")}»", consoleWidth, pageIndent)); 
+>>>>>>> 5740e0c410773f82d0abade7996c5d53f3dc7b8d
             context.AppendLine(pageIndent);
             context.AppendLine(pageIndent);
 
@@ -64,11 +68,17 @@ namespace CourseWork_OOP.Services
             // Блок виконавця
             context.Append(pageIndent + internalBlockIndent);
             context.Append("Виконав:".PadRight(internalLabelWidth));
+<<<<<<< HEAD
             // !!! Перевірте назву властивості 'Group' !!!
             context.AppendLine($"студент гр. {GetText(Data.Group, "Група")}");
 
             context.Append(pageIndent + internalNameIndent);
             // !!! Перевірте назву властивості 'StudentsFullName' !!!
+=======
+            context.AppendLine($"студент гр. {GetText(Data.Group, "Група")}");
+
+            context.Append(pageIndent + internalNameIndent);
+>>>>>>> 5740e0c410773f82d0abade7996c5d53f3dc7b8d
             context.AppendLine(GetText(Data.StudentsFullName, "ПІБ Студента"));
 
             context.AppendLine(pageIndent); 
