@@ -1,17 +1,18 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CourseWork_OOP.Services; 
+using CourseWork_OOP.Services;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;       
-using System.IO;                
-using System.Threading.Tasks;   
-using System.Windows;           
+using System.Diagnostics;
+using System.IO;
+using System.Threading.Tasks;
+using System.Windows;
 
-namespace CourseWork_OOP 
+namespace CourseWork_OOP
 {
     public partial class MainWindowViewModel : ObservableObject
     {
+        // --- Властивості ViewModel ---
         [ObservableProperty] private string university = "Назва Університету";
         [ObservableProperty] private string faculty = "Назва Факультету";
         [ObservableProperty] private string department = "Назва Кафедри";
@@ -21,101 +22,136 @@ namespace CourseWork_OOP
         [ObservableProperty] private string studentGroup = "Група";
         [ObservableProperty] private string supervisorFullName = "Прізвище І.П. Керівника";
         [ObservableProperty] private string supervisorPosition = "Посада Керівника";
-        [ObservableProperty] private string city = "Черкаси"; 
+        [ObservableProperty] private string city = "Черкаси";
         [ObservableProperty] private int year = DateTime.Now.Year;
 
         [ObservableProperty] private string statusMessage = "Готово";
 
-        [RelayCommand]
-        private async Task GenerateCoverPagesAsync()
+
+        [RelayCommand] 
+        private async Task GenerateCoverPagesAsync() 
         {
-            System.Diagnostics.Debug.WriteLine($"--- GenerateCoverPagesAsync ЗАПУЩЕНО о {DateTime.Now:HH:mm:ss.fff} ---");
+            System.Diagnostics.Debug.WriteLine($"--- GenerateCoverPagesAsync  ЗАПУЩЕНО о {DateTime.Now:HH:mm:ss.fff} ---");
 
-            StatusMessage = "Підготовка до генерації..."; 
+            StatusMessage = "Читання даних з Google Sheets...";
 
+            string spreadSheetId = "1dxJM2Gpj9YfyPVUEzMgQyjl4jc_QAF5U0sD2im8oxj4";
+            string range = "ООП!B5:F";
+
+            List<CoverPageData> allStudentData;
             try
             {
-                CoverPageData coverData = new CoverPageData
+                allStudentData = await GoogleSheet.ReadSheetAsync(spreadSheetId, range);
+            }
+            catch (ArgumentException argEx)
+            {
+                StatusMessage = $"Помилка конфігурації: {argEx.Message}";
+                MessageBox.Show(argEx.Message, "Помилка конфігурації", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Помилка читання даних з таблиці: {ex.Message}";
+                Debug.WriteLine($"Помилка читання даних з таблиці: {ex.ToString()}");
+                MessageBox.Show($"Не вдалося прочитати дані: {ex.Message}", "Помилка Google Sheets", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            if (allStudentData == null || allStudentData.Count == 0)
+            {
+                StatusMessage = "Дані студентів не знайдено у таблиці або сталася помилка читання.";
+                return;
+            }
+
+            StatusMessage = $"Отримано дані для {allStudentData.Count} студентів. Починаю генерацію...";
+
+            string outputDirectory = Path.Combine(AppContext.BaseDirectory, "Generated_TitlePages");
+            Directory.CreateDirectory(outputDirectory);
+
+            List<string> totalErrors = new List<string>();
+            int successCount = 0;
+            int generatorCountPerStudent = 4; 
+            int totalFilesToGenerate = allStudentData.Count * generatorCountPerStudent;
+            int generatedFileCount = 0;
+
+
+            try 
+            {
+                for (int i = 0; i < allStudentData.Count; i++)
                 {
-                    University = this.University,
-                    Faculty = this.Faculty,
-                    Department = this.Department,
-                    Discipline = this.Discipline,
-                    Topic = this.Topic,
-                    StudentsFullName = this.StudentFullName,
-                    Group = this.StudentGroup,
-                    SuperVisorFullName = this.SupervisorFullName,
-                    SuperVisorPosition = this.SupervisorPosition,
-                    City = this.City,
-                    Year = this.Year
-                };
+                    CoverPageData currentStudentData = allStudentData[i];
 
-                string outputDirectory = Path.Combine(AppContext.BaseDirectory, "Generated_TitlePages");
-                Directory.CreateDirectory(outputDirectory);
+                    if (string.IsNullOrWhiteSpace(currentStudentData.StudentsFullName) || string.IsNullOrWhiteSpace(currentStudentData.Topic))
+                    {
+                        string errorMsg = $"Пропуск студента #{i + 1}: Відсутнє ПІБ або Тема.";
+                        Debug.WriteLine(errorMsg);
+                        totalErrors.Add(errorMsg);
+                        continue;
+                    }
 
-                List<CoverPageGenerator> generators = new List<CoverPageGenerator>();
-                try
-                {
-                    generators.Add(new LaTeX(coverData));
-                    generators.Add(new Html(coverData));
-                    generators.Add(new PlainText(coverData));
-                    generators.Add(new Docs(coverData)); 
-                }
-                catch (Exception ex)
-                {
-                    StatusMessage = $"Помилка при створенні генераторів: {ex.Message}";
-                    Debug.WriteLine($"Помилка ініціалізації списку генераторів: {ex.ToString()}");
-                    return;
-                }
-                if (generators.Count == 0) { StatusMessage = "Немає генераторів."; return; } 
+                    string studentIdentifier = $"{i + 1}/{allStudentData.Count}: {currentStudentData.StudentsFullName}";
+                    StatusMessage = $"Генерація для {studentIdentifier}...";
+                    Debug.WriteLine($"--- Початок генерації для: {studentIdentifier} ---");
 
-                StatusMessage = $"Починаю генерацію у папку: {outputDirectory}";
-                List<string> errors = new List<string>();
-
-                foreach (var generator in generators)
-                {
-
-                    string formatName = "Unknown";
-                    string fileExtension = "tmp";
-
-                    if (generator is LaTeX) { formatName = "LaTeX"; fileExtension = "tex"; }
-                    else if (generator is Html) { formatName = "Html"; fileExtension = "html"; }
-                    else if (generator is PlainText) { formatName = "PlainText"; fileExtension = "txt"; }
-                     else if (generator is Docs) { formatName = "GoogleDoc"; fileExtension = ""; }
-
-                    string safeStudentName = string.Join("_", coverData.StudentsFullName?.Split(Path.GetInvalidFileNameChars()) ?? Array.Empty<string>());
-                    string baseFileName = $"Титулка_{safeStudentName}_{formatName}_{DateTime.Now:yyyyMMddHHmmss}"; 
-
-                    string argumentForGenerateAsync = (formatName == "GoogleDoc")
-                        ? baseFileName 
-                        : Path.Combine(outputDirectory, baseFileName); 
-
-                    StatusMessage = $"Генерація {formatName.ToUpper()}...";
-                    Debug.WriteLine($"Запуск генерації для {formatName} з аргументом: {argumentForGenerateAsync}");
-
+                    List<CoverPageGenerator> generators = new List<CoverPageGenerator>();
                     try
                     {
-                        await generator.GenerateAsync(argumentForGenerateAsync);
-                        Debug.WriteLine($"{formatName.ToUpper()} згенеровано успішно.");
+                        generators.Add(new LaTeX(currentStudentData));
+                        generators.Add(new Html(currentStudentData));
+                        generators.Add(new PlainText(currentStudentData));
+                       // generators.Add(new Docs(currentStudentData));
                     }
-                    catch (NotImplementedException) { string msg = $"Метод GenerateAsync не реалізовано для {formatName}"; Debug.WriteLine(msg); errors.Add(msg); }
-                    catch (Exception ex) { string msg = $"Помилка {formatName}: {ex.Message}"; Debug.WriteLine(msg + $"\n{ex.StackTrace}"); errors.Add(msg); } 
+                    catch (Exception ex)
+                    {
+                        string errorMsg = $"Помилка створення генераторів для {studentIdentifier}: {ex.Message}";
+                        Debug.WriteLine(errorMsg);
+                        totalErrors.Add(errorMsg);
+                        continue;
+                    }
+
+                    foreach (var generator in generators)
+                    {
+
+                        string formatName = "Unknown";
+                        string fileExtension = "tmp";
+
+                        if (generator is LaTeX) { formatName = "LaTeX"; fileExtension = "tex"; }
+                        else if (generator is Html) { formatName = "Html"; fileExtension = "html"; }
+                        else if (generator is PlainText) { formatName = "PlainText"; fileExtension = "txt"; }
+                       // else if (generator is Docs) { formatName = "GoogleDoc"; fileExtension = ""; }
+
+                        string safeStudentName = string.Join("_", currentStudentData.StudentsFullName.Split(Path.GetInvalidFileNameChars()));
+                        string baseFileName = $"Титулка_{safeStudentName}_{formatName}_{DateTime.Now:yyyyMMddHHmmss}";
+                        string argumentForGenerateAsync = (formatName == "GoogleDoc") ? baseFileName : Path.Combine(outputDirectory, baseFileName);
+
+                        Debug.WriteLine($"Запуск генерації {formatName} для {studentIdentifier} з аргументом: {argumentForGenerateAsync}");
+
+                        try
+                        {
+                            await generator.GenerateAsync(argumentForGenerateAsync);
+                            Debug.WriteLine($"{formatName.ToUpper()} згенеровано успішно для {studentIdentifier}.");
+                            generatedFileCount++;
+                        }
+                        catch (NotImplementedException) {  }
+                        catch (Exception ex) {  }
+
+                    } 
+
 
                 } 
 
-                System.Diagnostics.Debug.WriteLine($"--- GenerateCoverPagesAsync ЗАВЕРШИВ try блок о {DateTime.Now:HH:mm:ss.fff} ---");
+                string finalMessage = $"Завершено. Оброблено студентів: {allStudentData.Count}. ";
+                if (totalErrors.Count == 0) { finalMessage += $"Успішно згенеровано {generatedFileCount} файлів/документів."; }
+                else { finalMessage += $"Успішно: {generatedFileCount} файлів/документів. Помилок: {totalErrors.Count}."; }
+                StatusMessage = finalMessage;
+                Debug.WriteLine($"--- GenerateCoverPagesAsync (Batch Mode, No IsBusy) ЗАВЕРШИВ роботу о {DateTime.Now:HH:mm:ss.fff} ---");
 
-                if (errors.Count == 0) { StatusMessage = $"Успішно згенеровано {generators.Count} файл(ів) у папку: {outputDirectory}"; }
-                else { StatusMessage = $"Генерація завершена з {errors.Count} помилками."; }
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
-                StatusMessage = $"Критична помилка: {ex.Message}";
-                Debug.WriteLine($"Критична помилка у GenerateCoverPagesAsync: {ex.ToString()}");
-                MessageBox.Show($"Сталася неочікувана помилка: {ex.Message}", "Критична помилка", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            finally
-            {
+                StatusMessage = $"Критична помилка під час генерації: {ex.Message}";
+                Debug.WriteLine($"Критична помилка у GenerateCoverPagesAsync (Batch): {ex.ToString()}");
+                MessageBox.Show($"Сталася неочікувана помилка під час пакетної генерації: {ex.Message}", "Критична помилка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         } 
     } 

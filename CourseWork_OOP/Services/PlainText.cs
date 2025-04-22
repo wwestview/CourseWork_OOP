@@ -19,7 +19,6 @@ namespace CourseWork_OOP.Services
         {
             if (string.IsNullOrEmpty(text)) return pageIndent;
             int textWidth = text.Length;
-            // Доступна ширина після основного відступу
             int availableWidth = totalWidth - pageIndent.Length;
             if (availableWidth < 0) availableWidth = 0; 
             int padLeft = (availableWidth - textWidth) / 2;
