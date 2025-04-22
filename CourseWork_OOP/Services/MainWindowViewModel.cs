@@ -1,37 +1,17 @@
-<<<<<<< HEAD
-﻿// File: MainWindowViewModel.cs
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-// Переконайтесь, що ці using вірні для вашого проєкту та класів
-using CourseWork_OOP.Services; // Припускаємо, що тут генератори (LaTeX, Html, PlainText) та базовий клас (CoverPageGenerator)
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;       // Для Debug.WriteLine
-using System.IO;                // Для Path, Directory
-using System.Threading.Tasks;   // Для Task (асинхронність)
-using System.Windows;           // Для MessageBox
-
-namespace CourseWork_OOP // Перевірте namespace
-{
-    public partial class MainWindowViewModel : ObservableObject
-    {
-        // --- Властивості ViewModel ---
-=======
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CourseWork_OOP.Services; 
+using CourseWork_OOP.Services;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;       
-using System.IO;                
-using System.Threading.Tasks;   
-using System.Windows;           
+using System.Diagnostics;
+using System.IO;
+using System.Threading.Tasks;
+using System.Windows;
 
-namespace CourseWork_OOP 
+namespace CourseWork_OOP
 {
     public partial class MainWindowViewModel : ObservableObject
     {
->>>>>>> 5740e0c410773f82d0abade7996c5d53f3dc7b8d
         [ObservableProperty] private string university = "Назва Університету";
         [ObservableProperty] private string faculty = "Назва Факультету";
         [ObservableProperty] private string department = "Назва Кафедри";
@@ -41,179 +21,137 @@ namespace CourseWork_OOP
         [ObservableProperty] private string studentGroup = "Група";
         [ObservableProperty] private string supervisorFullName = "Прізвище І.П. Керівника";
         [ObservableProperty] private string supervisorPosition = "Посада Керівника";
-<<<<<<< HEAD
-        [ObservableProperty] private string city = "Черкаси"; // м. Черкаси, Черкаська область, Україна
-=======
-        [ObservableProperty] private string city = "Черкаси"; 
->>>>>>> 5740e0c410773f82d0abade7996c5d53f3dc7b8d
+        [ObservableProperty] private string city = "Черкаси";
         [ObservableProperty] private int year = DateTime.Now.Year;
 
         [ObservableProperty] private string statusMessage = "Готово";
 
-        [RelayCommand]
-        private async Task GenerateCoverPagesAsync()
+
+        [RelayCommand] 
+        private async Task GenerateCoverPagesAsync() 
         {
-<<<<<<< HEAD
-            // Діагностичне повідомлення про старт
-            System.Diagnostics.Debug.WriteLine($"--- GenerateCoverPagesAsync ЗАПУЩЕНО о {DateTime.Now:HH:mm:ss.fff} ---");
+            System.Diagnostics.Debug.WriteLine($"--- GenerateCoverPagesAsync  ЗАПУЩЕНО о {DateTime.Now:HH:mm:ss.fff} ---");
 
-            StatusMessage = "Підготовка до генерації..."; // Оновлюємо статус
+            StatusMessage = "Читання даних з Google Sheets...";
 
+            string spreadSheetId = "1dxJM2Gpj9YfyPVUEzMgQyjl4jc_QAF5U0sD2im8oxj4";
+            string range = "ООП!B5:F";
+
+            List<CoverPageData> allStudentData;
             try
             {
-                // 1. Збираємо дані з ПУБЛІЧНИХ властивостей ViewModel
-=======
-            System.Diagnostics.Debug.WriteLine($"--- GenerateCoverPagesAsync ЗАПУЩЕНО о {DateTime.Now:HH:mm:ss.fff} ---");
-
-            StatusMessage = "Підготовка до генерації..."; 
-
-            try
+                allStudentData = await GoogleSheet.ReadSheetAsync(spreadSheetId, range);
+            }
+            catch (ArgumentException argEx)
             {
->>>>>>> 5740e0c410773f82d0abade7996c5d53f3dc7b8d
-                CoverPageData coverData = new CoverPageData
+                StatusMessage = $"Помилка конфігурації: {argEx.Message}";
+                MessageBox.Show(argEx.Message, "Помилка конфігурації", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Помилка читання даних з таблиці: {ex.Message}";
+                Debug.WriteLine($"Помилка читання даних з таблиці: {ex.ToString()}");
+                MessageBox.Show($"Не вдалося прочитати дані: {ex.Message}", "Помилка Google Sheets", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            if (allStudentData == null || allStudentData.Count == 0)
+            {
+                StatusMessage = "Дані студентів не знайдено у таблиці або сталася помилка читання.";
+                return;
+            }
+
+            StatusMessage = $"Отримано дані для {allStudentData.Count} студентів. Починаю генерацію...";
+
+            string outputDirectory = Path.Combine(AppContext.BaseDirectory, "Generated_TitlePages");
+            Directory.CreateDirectory(outputDirectory);
+
+            List<string> totalErrors = new List<string>();
+            int successCount = 0;
+            int generatorCountPerStudent = 4; 
+            int totalFilesToGenerate = allStudentData.Count * generatorCountPerStudent;
+            int generatedFileCount = 0;
+
+
+            try 
+            {
+                for (int i = 0; i < allStudentData.Count; i++)
                 {
-                    University = this.University,
-                    Faculty = this.Faculty,
-                    Department = this.Department,
-                    Discipline = this.Discipline,
-                    Topic = this.Topic,
-                    StudentsFullName = this.StudentFullName,
-                    Group = this.StudentGroup,
-                    SuperVisorFullName = this.SupervisorFullName,
-                    SuperVisorPosition = this.SupervisorPosition,
-                    City = this.City,
-                    Year = this.Year
-                };
+                    CoverPageData currentStudentData = allStudentData[i];
 
-<<<<<<< HEAD
-                // 2. Папка
-                string outputDirectory = Path.Combine(AppContext.BaseDirectory, "Generated_TitlePages");
-                Directory.CreateDirectory(outputDirectory);
+                    if (string.IsNullOrWhiteSpace(currentStudentData.StudentsFullName) || string.IsNullOrWhiteSpace(currentStudentData.Topic))
+                    {
+                        string errorMsg = $"Пропуск студента #{i + 1}: Відсутнє ПІБ або Тема.";
+                        Debug.WriteLine(errorMsg);
+                        totalErrors.Add(errorMsg);
+                        continue;
+                    }
 
-                // 3. Список генераторів
-=======
-                string outputDirectory = Path.Combine(AppContext.BaseDirectory, "Generated_TitlePages");
-                Directory.CreateDirectory(outputDirectory);
+                    string studentIdentifier = $"{i + 1}/{allStudentData.Count}: {currentStudentData.StudentsFullName}";
+                    StatusMessage = $"Генерація для {studentIdentifier}...";
+                    Debug.WriteLine($"--- Початок генерації для: {studentIdentifier} ---");
 
->>>>>>> 5740e0c410773f82d0abade7996c5d53f3dc7b8d
-                List<CoverPageGenerator> generators = new List<CoverPageGenerator>();
-                try
-                {
-                    generators.Add(new LaTeX(coverData));
-                    generators.Add(new Html(coverData));
-                    generators.Add(new PlainText(coverData));
-<<<<<<< HEAD
-                    generators.Add(new Docs(coverData)); // Додайте реалізовані генератори
-=======
-                    generators.Add(new Docs(coverData)); 
->>>>>>> 5740e0c410773f82d0abade7996c5d53f3dc7b8d
-                }
-                catch (Exception ex)
-                {
-                    StatusMessage = $"Помилка при створенні генераторів: {ex.Message}";
-                    Debug.WriteLine($"Помилка ініціалізації списку генераторів: {ex.ToString()}");
-<<<<<<< HEAD
-                    return; // finally виконається
-                }
-                if (generators.Count == 0) { StatusMessage = "Немає генераторів."; return; } // finally виконається
-=======
-                    return;
-                }
-                if (generators.Count == 0) { StatusMessage = "Немає генераторів."; return; } 
->>>>>>> 5740e0c410773f82d0abade7996c5d53f3dc7b8d
-
-                StatusMessage = $"Починаю генерацію у папку: {outputDirectory}";
-                List<string> errors = new List<string>();
-
-<<<<<<< HEAD
-                // 4. Цикл генерації
-=======
->>>>>>> 5740e0c410773f82d0abade7996c5d53f3dc7b8d
-                foreach (var generator in generators)
-                {
-
-                    string formatName = "Unknown";
-                    string fileExtension = "tmp";
-
-<<<<<<< HEAD
-                    // Визначаємо формат та розширення
-=======
->>>>>>> 5740e0c410773f82d0abade7996c5d53f3dc7b8d
-                    if (generator is LaTeX) { formatName = "LaTeX"; fileExtension = "tex"; }
-                    else if (generator is Html) { formatName = "Html"; fileExtension = "html"; }
-                    else if (generator is PlainText) { formatName = "PlainText"; fileExtension = "txt"; }
-                     else if (generator is Docs) { formatName = "GoogleDoc"; fileExtension = ""; }
-
-<<<<<<< HEAD
-                    // Формуємо ім'я файлу / заголовок
-                    string safeStudentName = string.Join("_", coverData.StudentsFullName?.Split(Path.GetInvalidFileNameChars()) ?? Array.Empty<string>());
-                    string baseFileName = $"Титулка_{safeStudentName}_{formatName}_{DateTime.Now:yyyyMMddHHmmss}"; // Назва без розширення
-
-                    // Визначаємо аргумент для GenerateAsync
-                    string argumentForGenerateAsync = (formatName == "GoogleDoc")
-                        ? baseFileName // Для Google Doc передаємо лише назву
-                        : Path.Combine(outputDirectory, baseFileName); // Для інших - шлях без розширення
-=======
-                    string safeStudentName = string.Join("_", coverData.StudentsFullName?.Split(Path.GetInvalidFileNameChars()) ?? Array.Empty<string>());
-                    string baseFileName = $"Титулка_{safeStudentName}_{formatName}_{DateTime.Now:yyyyMMddHHmmss}"; 
-
-                    string argumentForGenerateAsync = (formatName == "GoogleDoc")
-                        ? baseFileName 
-                        : Path.Combine(outputDirectory, baseFileName); 
->>>>>>> 5740e0c410773f82d0abade7996c5d53f3dc7b8d
-
-                    StatusMessage = $"Генерація {formatName.ToUpper()}...";
-                    Debug.WriteLine($"Запуск генерації для {formatName} з аргументом: {argumentForGenerateAsync}");
-
+                    List<CoverPageGenerator> generators = new List<CoverPageGenerator>();
                     try
                     {
-<<<<<<< HEAD
-                        // Викликаємо GenerateAsync
-=======
->>>>>>> 5740e0c410773f82d0abade7996c5d53f3dc7b8d
-                        await generator.GenerateAsync(argumentForGenerateAsync);
-                        Debug.WriteLine($"{formatName.ToUpper()} згенеровано успішно.");
+                        generators.Add(new LaTeX(currentStudentData));
+                        generators.Add(new Html(currentStudentData));
+                        generators.Add(new PlainText(currentStudentData));
+                       // generators.Add(new Docs(currentStudentData));
                     }
-                    catch (NotImplementedException) { string msg = $"Метод GenerateAsync не реалізовано для {formatName}"; Debug.WriteLine(msg); errors.Add(msg); }
-<<<<<<< HEAD
-                    catch (Exception ex) { string msg = $"Помилка {formatName}: {ex.Message}"; Debug.WriteLine(msg + $"\n{ex.StackTrace}"); errors.Add(msg); } // Додав StackTrace у Debug
+                    catch (Exception ex)
+                    {
+                        string errorMsg = $"Помилка створення генераторів для {studentIdentifier}: {ex.Message}";
+                        Debug.WriteLine(errorMsg);
+                        totalErrors.Add(errorMsg);
+                        continue;
+                    }
 
-                } // Кінець циклу foreach
+                    foreach (var generator in generators)
+                    {
 
-                // Діагностичне повідомлення про кінець try блоку
-                System.Diagnostics.Debug.WriteLine($"--- GenerateCoverPagesAsync ЗАВЕРШИВ try блок о {DateTime.Now:HH:mm:ss.fff} ---");
+                        string formatName = "Unknown";
+                        string fileExtension = "tmp";
 
-                // 5. Повідомляємо про результат
-                if (errors.Count == 0) { StatusMessage = $"Успішно згенеровано {generators.Count} файл(ів) у папку: {outputDirectory}"; }
-                else { StatusMessage = $"Генерація завершена з {errors.Count} помилками."; }
-            }
-            catch (Exception ex) // Обробка загальних помилок
-=======
-                    catch (Exception ex) { string msg = $"Помилка {formatName}: {ex.Message}"; Debug.WriteLine(msg + $"\n{ex.StackTrace}"); errors.Add(msg); } 
+                        if (generator is LaTeX) { formatName = "LaTeX"; fileExtension = "tex"; }
+                        else if (generator is Html) { formatName = "Html"; fileExtension = "html"; }
+                        else if (generator is PlainText) { formatName = "PlainText"; fileExtension = "txt"; }
+                       // else if (generator is Docs) { formatName = "GoogleDoc"; fileExtension = ""; }
+
+                        string safeStudentName = string.Join("_", currentStudentData.StudentsFullName.Split(Path.GetInvalidFileNameChars()));
+                        string baseFileName = $"Титулка_{safeStudentName}_{formatName}_{DateTime.Now:yyyyMMddHHmmss}";
+                        string argumentForGenerateAsync = (formatName == "GoogleDoc") ? baseFileName : Path.Combine(outputDirectory, baseFileName);
+
+                        Debug.WriteLine($"Запуск генерації {formatName} для {studentIdentifier} з аргументом: {argumentForGenerateAsync}");
+
+                        try
+                        {
+                            await generator.GenerateAsync(argumentForGenerateAsync);
+                            Debug.WriteLine($"{formatName.ToUpper()} згенеровано успішно для {studentIdentifier}.");
+                            generatedFileCount++;
+                        }
+                        catch (NotImplementedException) {  }
+                        catch (Exception ex) {  }
+
+                    } 
+
 
                 } 
 
-                System.Diagnostics.Debug.WriteLine($"--- GenerateCoverPagesAsync ЗАВЕРШИВ try блок о {DateTime.Now:HH:mm:ss.fff} ---");
+                string finalMessage = $"Завершено. Оброблено студентів: {allStudentData.Count}. ";
+                if (totalErrors.Count == 0) { finalMessage += $"Успішно згенеровано {generatedFileCount} файлів/документів."; }
+                else { finalMessage += $"Успішно: {generatedFileCount} файлів/документів. Помилок: {totalErrors.Count}."; }
+                StatusMessage = finalMessage;
+                Debug.WriteLine($"--- GenerateCoverPagesAsync (Batch Mode, No IsBusy) ЗАВЕРШИВ роботу о {DateTime.Now:HH:mm:ss.fff} ---");
 
-                if (errors.Count == 0) { StatusMessage = $"Успішно згенеровано {generators.Count} файл(ів) у папку: {outputDirectory}"; }
-                else { StatusMessage = $"Генерація завершена з {errors.Count} помилками."; }
             }
-            catch (Exception ex) 
->>>>>>> 5740e0c410773f82d0abade7996c5d53f3dc7b8d
+            catch (Exception ex)
             {
-                StatusMessage = $"Критична помилка: {ex.Message}";
-                Debug.WriteLine($"Критична помилка у GenerateCoverPagesAsync: {ex.ToString()}");
-                MessageBox.Show($"Сталася неочікувана помилка: {ex.Message}", "Критична помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+                StatusMessage = $"Критична помилка під час генерації: {ex.Message}";
+                Debug.WriteLine($"Критична помилка у GenerateCoverPagesAsync (Batch): {ex.ToString()}");
+                MessageBox.Show($"Сталася неочікувана помилка під час пакетної генерації: {ex.Message}", "Критична помилка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            finally
-            {
-            }
-<<<<<<< HEAD
-        } // Кінець методу GenerateCoverPagesAsync
-    } // Кінець класу MainWindowViewModel
-} // Кінець простору імен
-=======
         } 
     } 
 } 
->>>>>>> 5740e0c410773f82d0abade7996c5d53f3dc7b8d
