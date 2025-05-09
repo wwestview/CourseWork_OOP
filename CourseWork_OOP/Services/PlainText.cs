@@ -1,98 +1,87 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using CourseWork_OOP.Interfaces;
+using CourseWork_OOP.Services;
+using System;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.IO;
 
 namespace CourseWork_OOP.Services
 {
-    public class PlainText : CoverPageGenerator
+    public class PlainText : ITitlePageGenerator
     {
-        public PlainText(CoverPageData data) : base(data)
-        {
+        public PlainText() { }
 
-        }
         private string GetText(string? text, string defaultText = "") => text ?? defaultText;
+        private string CenterLine(string text, int totalWidth = 80) { if (string.IsNullOrEmpty(text)) return ""; int padLeft = (totalWidth - text.Length) / 2; return new string(' ', Math.Max(0, padLeft)) + text; }
+        private string Indent(int spaces) => new string(' ', spaces);
 
-        private string CenterLine(string text, int totalWidth, string pageIndent)
-        {
-            if (string.IsNullOrEmpty(text)) return pageIndent;
-            int textWidth = text.Length;
-            int availableWidth = totalWidth - pageIndent.Length;
-            if (availableWidth < 0) availableWidth = 0; 
-            int padLeft = (availableWidth - textWidth) / 2;
-            if (padLeft < 0) padLeft = 0; 
-            return pageIndent + new string(' ', padLeft) + text;
-        }
-
-        private string IndentLine(string text, string pageIndent)
-        {
-            return pageIndent + text;
-        }
-
-        public override async Task GenerateAsync(string baseFileName)
+        public async Task GenerateAsync(TitlePageData data, string argument)
         {
             var context = new StringBuilder();
-            int consoleWidth = 80; 
+            int pageWidth = 80;
+            int rightBlockIndent = 47;
+            string rightIndent = Indent(rightBlockIndent);
+            string commissionIndent = Indent(rightBlockIndent + 2);
 
-            string pageIndent = new string(' ', 10);
+            context.AppendLine(CenterLine("Міністерство освіти і науки України", pageWidth));
+            context.AppendLine(CenterLine(GetText(data.University), pageWidth));
+            context.AppendLine();
 
-            context.AppendLine(CenterLine("Міністерство освіти і науки України", consoleWidth, pageIndent));
-            context.AppendLine(CenterLine(GetText(Data.University, "Назва Університету"), consoleWidth, pageIndent));
-            context.AppendLine(pageIndent); 
-            context.AppendLine(pageIndent);
+            context.AppendLine(Indent(14) + $"Факультет {GetText(data.Faculty)}");
+            context.AppendLine(Indent(14) + $"Кафедра {GetText(data.Department)}");
+            context.AppendLine(); context.AppendLine(); context.AppendLine();
 
-            int labelWidthFacultyDept = 15;
-            context.AppendLine(IndentLine($"{"Факультет".PadRight(labelWidthFacultyDept)}{GetText(Data.Faculty, "Назва Факультету")}", pageIndent));
-            context.AppendLine(IndentLine($"{"Кафедра".PadRight(labelWidthFacultyDept)}{GetText(Data.Department, "Назва Кафедри")}", pageIndent));
-            context.AppendLine(pageIndent);
-            context.AppendLine(pageIndent);
-            context.AppendLine(pageIndent);
+            string workType = "КУРСОВА РОБОТА";
+            string subjectType = data.Discipline ?? "";
+            if (subjectType.ToLower().Contains("програмування")) workType = $"КУРСОВА РОБОТА З ОБ’ЄКТНО-ОРІЄНТОВАНОГО ПРОГРАМУВАННЯ";
+            else if (!string.IsNullOrEmpty(subjectType)) workType = $"КУРСОВА РОБОТА З ДИСЦИПЛІНИ «{GetText(data.Discipline)}»";
+            context.AppendLine(CenterLine(workType, pageWidth));
+            context.AppendLine(CenterLine($"на тему «{GetText(data.Topic)}»", pageWidth));
+            context.AppendLine(); context.AppendLine();
 
-            context.AppendLine(CenterLine("Курсова Робота", consoleWidth, pageIndent));
-            context.AppendLine(CenterLine($"по дисципліні «{GetText(Data.Discipline, "Об'єкто-орієнтоване програмування")}»", consoleWidth, pageIndent));
-            context.AppendLine(CenterLine($"На тему: «{GetText(Data.Topic, "Тема роботи")}»", consoleWidth, pageIndent)); 
-            context.AppendLine(pageIndent);
-            context.AppendLine(pageIndent);
+            string studentLabel = (data.Sex == "Жін") ? "Студентки" : "Студента";
+            context.AppendLine(rightIndent + $"{studentLabel} {GetText(data.CourseNumber, "2")} курсу,");
+            context.AppendLine(rightIndent + $"групи {GetText(data.Group)}");
+            context.AppendLine(rightIndent + $"{GetText(data.SpecialtyName, "спеціальності 121 «Інженерія програмного забезпечення»")}");
+            context.AppendLine();
+            context.AppendLine(rightIndent + $"{GetText(data.StudentsFullName)}");
+            context.AppendLine(rightIndent + $"(прізвище та ініціали)");
+            context.AppendLine(); context.AppendLine();
 
-            string internalBlockIndent = new string(' ', 25); 
-            int internalLabelWidth = 12; 
-            string internalNameIndent = internalBlockIndent + new string(' ', internalLabelWidth); 
+            context.AppendLine(rightIndent + $"Керівник:  {GetText(data.SuperVisorPosition)}, {GetText(data.SuperVisorFullName)}");
+            context.AppendLine(rightIndent + $"(посада, вчене звання, науковий ступінь, прізвище та ініціали)");
+            context.AppendLine(); context.AppendLine();
 
-            context.Append(pageIndent + internalBlockIndent);
-            context.Append("Виконав:".PadRight(internalLabelWidth));
-            context.AppendLine($"студент гр. {GetText(Data.Group, "Група")}");
+            context.AppendLine(rightIndent + $"Оцінка за шкалою: ____________________");
+            context.AppendLine(rightIndent + $"  (національною, кількість балів, ECTS)");
+            context.AppendLine();
 
-            context.Append(pageIndent + internalNameIndent);
-            context.AppendLine(GetText(Data.StudentsFullName, "ПІБ Студента"));
+            context.AppendLine(rightIndent + $"  Члени комісії:");
+            context.AppendLine();
 
-            context.AppendLine(pageIndent); 
+            string sigLine = "______________"; string piiLinePlaceholder = "________________________"; string spacing = "       ";
+            string subSig = "(підпис)"; string subPii = "(прізвище та ініціали)";
+            int subSigPad = (sigLine.Length - subSig.Length) / 2; int subPiiPad = (piiLinePlaceholder.Length - subPii.Length) / 2;
+            string subSigLine = new string(' ', Math.Max(0, subSigPad)) + subSig;
+            string subPiiLine = new string(' ', Math.Max(0, subPiiPad)) + subPii;
 
-            context.Append(pageIndent + internalBlockIndent);
-            context.Append("Перевірив:".PadRight(internalLabelWidth));
-            context.AppendLine(GetText(Data.SuperVisorPosition, "Посада"));
-
-            context.Append(pageIndent + internalNameIndent);
-            context.AppendLine(GetText(Data.SuperVisorFullName, "ПІБ Керівника"));
-            context.AppendLine(pageIndent);
-            context.AppendLine(pageIndent);
-            context.AppendLine(pageIndent);
-
-            context.AppendLine(CenterLine($"{GetText(Data.City, "Місто")}, {Data.Year}", consoleWidth, pageIndent));
-
-            string filePath = $"{baseFileName}.txt";
-            try
+            for (int i = 0; i < 3; i++)
             {
-                var utf8WithoutBom = new UTF8Encoding(false);
-                await File.WriteAllTextAsync(filePath, context.ToString(), utf8WithoutBom);
-                System.Diagnostics.Debug.WriteLine($"Plain text file saved: {filePath}");
+                string memberName = (i < data.CommissionMemberNames?.Count && !string.IsNullOrWhiteSpace(data.CommissionMemberNames[i]))
+                                    ? GetText(data.CommissionMemberNames[i]).PadRight(piiLinePlaceholder.Length)
+                                    : piiLinePlaceholder;
+                context.AppendLine(commissionIndent + $"{sigLine}{spacing}{memberName.Substring(0, Math.Min(memberName.Length, piiLinePlaceholder.Length))}");
+                context.AppendLine(commissionIndent + $"{subSigLine}{spacing}{subPiiLine}");
+                if (i < 2) context.AppendLine();
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"ПОМИЛКА запису файлу {filePath}: {ex.ToString()}");
-                throw;
-            }
+
+            context.AppendLine(); context.AppendLine(); context.AppendLine();
+            context.AppendLine(CenterLine($"{GetText(data.City)} - {data.Year} рік", pageWidth));
+
+            string filePath = $"{argument}.txt";
+            try { await File.WriteAllTextAsync(filePath, context.ToString(), new UTF8Encoding(false)); System.Diagnostics.Debug.WriteLine($"Plain text saved: {filePath}"); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"ПОМИЛКА запису файлу {filePath}: {ex.ToString()}"); throw; }
         }
     }
 }

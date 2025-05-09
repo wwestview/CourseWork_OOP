@@ -1,20 +1,33 @@
-﻿using Google.Apis.Auth.OAuth2;
+﻿using CourseWork_OOP.Services; 
+using Google.Apis.Auth.OAuth2;
+using Google.Apis.Services;
 using Google.Apis.Sheets.v4;
-using Google.Apis.Sheets.v4.Data; 
-using Google.Apis.Services;      
+using Google.Apis.Sheets.v4.Data;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace CourseWork_OOP.Services 
+namespace CourseWork_OOP.Services
 {
     public static class GoogleSheet
     {
-        public static async Task<List<CoverPageData>> ReadSheetAsync(string spreadSheetId, string range, CancellationToken cancellationToken = default)
+        private static string? GetRowValue(IList<object> row, int index, string? defaultValue = null)
         {
-            List<CoverPageData> studentDataList = new List<CoverPageData>();
+            if (row != null && index < row.Count && row[index] != null && !string.IsNullOrWhiteSpace(row[index]?.ToString()))
+            {
+                return row[index]?.ToString();
+            }
+            return defaultValue;
+        }
+
+        private static string GetText(string? text, string defaultText = "") => text ?? defaultText;
+
+        public static async Task<List<TitlePageData>> ReadSheetAsync(string spreadSheetId, string range, CancellationToken cancellationToken = default)
+        {
+            List<TitlePageData> studentDataList = new List<TitlePageData>();
             Debug.WriteLine($"Спроба читання даних з таблиці ID: {spreadSheetId}, діапазон: {range}");
 
             if (string.IsNullOrWhiteSpace(spreadSheetId) || string.IsNullOrWhiteSpace(range))
@@ -24,8 +37,7 @@ namespace CourseWork_OOP.Services
 
             try
             {
-                var credential = await GoogleAuth.GetCredentialsAsync(cancellationToken); 
-
+                var credential = await GoogleAuth.GetCredentialsAsync(cancellationToken);
                 var sheetsService = new SheetsService(new BaseClientService.Initializer()
                 {
                     HttpClientInitializer = credential,
@@ -33,7 +45,6 @@ namespace CourseWork_OOP.Services
                 });
 
                 SpreadsheetsResource.ValuesResource.GetRequest request = sheetsService.Spreadsheets.Values.Get(spreadSheetId, range);
-
                 Debug.WriteLine("Надсилаємо запит до Google Sheets API...");
                 ValueRange response = await request.ExecuteAsync(cancellationToken);
                 IList<IList<object>> values = response.Values;
@@ -42,6 +53,7 @@ namespace CourseWork_OOP.Services
                 {
                     Debug.WriteLine($"Отримано {values.Count} рядків даних.");
                     int rowNumber = 5; 
+
                     foreach (var row in values)
                     {
                         if (row == null || row.All(cell => cell == null || string.IsNullOrWhiteSpace(cell.ToString())))
@@ -51,29 +63,44 @@ namespace CourseWork_OOP.Services
                             continue;
                         }
 
-                        const int expectedColumnCount = 5;
+                        //  діапазон B:H 7 стовпців 
+                        const int expectedColumnCount = 7;
+
                         if (row.Count < expectedColumnCount)
                         {
-                            Debug.WriteLine($"Пропущено рядок {rowNumber} через недостатню кількість стовпців (очікувалось {expectedColumnCount}, отримано {row.Count}).");
+                            Debug.WriteLine($"Пропущено рядок {rowNumber} через недостатню кількість стовпців (очікувалось >= {expectedColumnCount}, отримано {row.Count}). Діапазон: {range}");
                             rowNumber++;
                             continue;
                         }
 
                         try
                         {
-                            var studentData = new CoverPageData
+                            // row[0] -> стовпець B
+                            // row[1] -> стовпець C
+                            // row[6] -> стовпець H 
+                            var studentData = new TitlePageData
                             {
-                                StudentsFullName = row[2]?.ToString(),        // Стовпець D
-                                Group = row[3]?.ToString(),                   // Стовпець E
-                                Topic = row[1]?.ToString(),                   // Стовпець C
-                                SuperVisorFullName = row[0]?.ToString(),      // Стовпець B
-                                SuperVisorPosition = row[4]?.ToString(),      // Стовпець F
-                                University = "Черкаський національний університет імені Богдана Хмельницького",
-                                Faculty = "Обчислювальної Техніки Інтелектуальних та Управляючих Систем",
-                                Department = "Кафедра програмного забезпечення автоматизованих систем",
-                                Discipline = "Об’єктно-орієнтоване програмування",
-                                City = "Черкаси", 
-                                Year = DateTime.Now.Year 
+                                SuperVisorFullName = GetRowValue(row, 0), //  стовпець B
+                                Topic = GetRowValue(row, 1), //  стовпець C
+                                StudentsFullName = GetRowValue(row, 2), //  стовпець D
+                                Group = GetRowValue(row, 3), //  стовпець E
+                                SuperVisorPosition = GetRowValue(row, 4), //  стовпець F
+                                Sex = GetRowValue(row, 5, "Чол"), //  стовпець G 
+
+                                CommissionMemberNames = (row.Count > 6 && row[6] != null)
+                                                      ? GetRowValue(row, 6, "")
+                                                            ?.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries) 
+                                                            .Select(s => s.Trim())
+                                                            .Take(3)
+                                                            .ToList() ?? new List<string>()
+                                                      : new List<string>(),
+
+                                CourseNumber = GetText(null, "2"),
+                                SpecialtyName = GetText(null, "спеціальності 121 «Інженерія програмного забезпечення»"),
+                                Discipline = GetText(null, "Об’єктно-орієнтоване програмування".ToUpper()),
+                                University = GetText(null, "Черкаський національний університет імені Богдана Хмельницького"),
+                                Faculty = GetText(null, "обчислювальної Техніки Інтелектуальних та Управляючих Систем"),
+                                Department = GetText(null, "програмного забезпечення автоматизованих систем"),
                             };
 
                             if (!string.IsNullOrWhiteSpace(studentData.StudentsFullName))

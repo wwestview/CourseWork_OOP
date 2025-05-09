@@ -1,136 +1,126 @@
-﻿using Google.Apis.Auth.OAuth2;
+﻿using CourseWork_OOP.Interfaces;
+using CourseWork_OOP.Services; 
+using Google.Apis.Auth.OAuth2;
 using Google.Apis.Docs.v1;
-using Google.Apis.Docs.v1.Data; 
+using Google.Apis.Docs.v1.Data;
 using Google.Apis.Services;
 using System;
-using System.Collections.Generic; 
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 
-namespace CourseWork_OOP.Services
+namespace CourseWork_OOP.Services 
 {
-    public class Docs : CoverPageGenerator
+    public class Docs : ITitlePageGenerator
     {
-        public Docs(CoverPageData data) : base(data)
-        {
-        }
+        public Docs() { }
 
-        public override async Task GenerateAsync(string baseFileName)
+        private static string GetText(string? text, string defaultText = "") => text ?? defaultText;
+        private static string Indent(int spaces) => new string(' ', spaces);
+
+        public async Task GenerateAsync(TitlePageData data, string argument)
         {
-            Debug.WriteLine($"Початок генерації Google Doc з назвою: {baseFileName}");
+            string documentTitle = argument;
+            Debug.WriteLine($"Початок генерації Google Doc з назвою: {documentTitle}");
             string documentId = null;
+            int insertionIndex = 1; 
 
             try
             {
-
-
-
-                try
+                UserCredential credential = await GoogleAuth.GetCredentialsAsync();
+                var docsService = new DocsService(new BaseClientService.Initializer()
                 {
-                    UserCredential credential = await GoogleAuth.GetCredentialsAsync();
+                    HttpClientInitializer = credential,
+                    ApplicationName = "CourseWork OOP Title Page Generator"
+                });
 
-                    var docsService = new DocsService(new BaseClientService.Initializer()
+                var document = new Document { Title = documentTitle };
+                var createdDocument = await docsService.Documents.Create(document).ExecuteAsync();
+                documentId = createdDocument.DocumentId;
+                Debug.WriteLine($"Google Doc створено! ID: {documentId}");
+
+                List<Request> requests = new List<Request>();
+
+                Action<string, string, bool, bool> AddFormattedInsert = (text, alignment, isBold, isItalic) => {
+                    string currentText = string.IsNullOrEmpty(text) ? "\n" : text;
+
+                    requests.Add(new Request { InsertText = new InsertTextRequest { Text = currentText, Location = new Location { Index = insertionIndex } } });
+
+                    if (!(currentText == "\n" && string.IsNullOrWhiteSpace(text))) 
                     {
-                        HttpClientInitializer = credential,
-                        ApplicationName = "CourseWork OOP Title Page Generator"
-                    });
-
-                    var document = new Document { Title = baseFileName };
-                    Debug.WriteLine($"Надсилаємо запит на створення Google Doc: {document.Title}");
-                    var createdDocument = await docsService.Documents.Create(document).ExecuteAsync();
-                    documentId = createdDocument.DocumentId;
-                    Debug.WriteLine($"Google Doc створено! ID: {documentId}");
-
-
-                    List<Request> requests = new List<Request>();
-                    int currentIndex = 1;
-
-
-
-
-                    Request CreateInsertTextRequest(string textToInsert)
-                    {
-                        return new Request()
+                        requests.Add(new Request
                         {
-                            InsertText = new InsertTextRequest()
+                            UpdateParagraphStyle = new UpdateParagraphStyleRequest
                             {
-                                Location = new Location() { Index = currentIndex },
-                                Text = textToInsert
+                                Range = new Google.Apis.Docs.v1.Data.Range { StartIndex = insertionIndex, EndIndex = insertionIndex + 1 },
+                                ParagraphStyle = new ParagraphStyle { Alignment = alignment },
+                                Fields = "alignment"
                             }
-                        };
+                        });
+                        requests.Add(new Request
+                        {
+                            UpdateTextStyle = new UpdateTextStyleRequest
+                            {
+                                Range = new Google.Apis.Docs.v1.Data.Range { StartIndex = insertionIndex, EndIndex = insertionIndex + 1 },
+                                TextStyle = new TextStyle { Bold = isBold, Italic = isItalic }, 
+                                Fields = "bold,italic"
+                            } 
+                        });
                     }
+                };
+                // ------------------------------------
 
-                    requests.Add(CreateInsertTextRequest($"{Data.City ?? "Місто"}, {Data.Year}\n"));
-                    requests.Add(CreateInsertTextRequest($"\n\n\n"));
+                AddFormattedInsert($"{GetText(data.City)} – {data.Year} рік\n", "CENTER", false, false);
+                AddFormattedInsert("\n\n", "START", false, false);
 
-                    requests.Add(CreateInsertTextRequest($"{Data.SuperVisorFullName ?? "ПІБ Керівника"}\n"));
-                    requests.Add(CreateInsertTextRequest($"{Data.SuperVisorPosition ?? "Посада"}\n"));
-                    requests.Add(CreateInsertTextRequest($"Перевірив:\n"));
-                    requests.Add(CreateInsertTextRequest($"\n\n"));
+                string sigPlaceholderUser = "______________"; string piiPlaceholderUser = "________________________"; string spacingUser = "       ";
+                string subSigUser = "(підпис)"; string subPiiUser = "(прізвище та ініціали)";
+                string commissionRowUser1 = $"{sigPlaceholderUser}{spacingUser}{piiPlaceholderUser}\n";
+                string commissionRowUser2 = $"{Indent(15)}{subSigUser}{spacingUser}{Indent(6)}{subPiiUser}\n";
+                for (int i = 0; i < 3; i++) { AddFormattedInsert(commissionRowUser2, "START", false, true); AddFormattedInsert(commissionRowUser1, "START", false, false); if (i < 2) AddFormattedInsert("\n", "START", false, false); }
+                AddFormattedInsert("Члени комісії:\n", "START", false, false);
+                AddFormattedInsert("\n", "START", false, false);
 
-                    requests.Add(CreateInsertTextRequest($"{Data.StudentsFullName ?? "ПІБ Студента"}\n"));
-                    requests.Add(CreateInsertTextRequest($"студент гр. {Data.Group ?? "Група"}\n"));
-                    requests.Add(CreateInsertTextRequest($"Виконав:\n"));
-                    requests.Add(CreateInsertTextRequest($"\n\n\n\n"));
+                AddFormattedInsert("(національною, кількість балів, ECTS)\n", "START", false, true);
+                AddFormattedInsert("_________________________________\n", "START", false, false);
+                AddFormattedInsert("Оцінка за шкалою:\n", "START", false, false);
+                AddFormattedInsert("\n", "START", false, false);
 
-                    requests.Add(CreateInsertTextRequest($"На тему: «{Data.Topic ?? "Тема роботи"}»\n"));
-                    requests.Add(CreateInsertTextRequest($"по дисципліні «{Data.Discipline ?? "Назва дисципліни"}»\n"));
-                    requests.Add(CreateInsertTextRequest($"Курсова Робота\n"));
-                    requests.Add(CreateInsertTextRequest($"\n\n\n\n\n"));
+                AddFormattedInsert("(посада, вчене звання, науковий ступінь, прізвище та ініціали)\n", "START", false, true);
+                AddFormattedInsert($"Керівник: {GetText(data.SuperVisorPosition)}, {GetText(data.SuperVisorFullName)}\n", "START", false, false);
+                AddFormattedInsert("\n\n", "START", false, false);
 
-                    requests.Add(CreateInsertTextRequest($"Кафедра {Data.Department ?? "Назва Кафедри"}\n"));
-                    requests.Add(CreateInsertTextRequest($"Факультет {Data.Faculty ?? "Назва Факультету"}\n"));
-                    requests.Add(CreateInsertTextRequest($"\n\n\n\n\n"));
+                AddFormattedInsert("(прізвище та ініціали)\n", "START", false, true);
+                AddFormattedInsert($"{GetText(data.StudentsFullName)}\n", "START", false, false);
+                AddFormattedInsert("\n", "START", false, false);
+                AddFormattedInsert($"{GetText(data.SpecialtyName, "спеціальності 121 «Інженерія програмного забезпечення»")}\n", "START", false, false);
+                string studentLabel = (data.Sex == "Жін") ? "Студентки" : "Студента";
+                AddFormattedInsert($"{studentLabel} {GetText(data.CourseNumber, "2")} курсу, групи {GetText(data.Group)}\n", "START", false, false);
+                AddFormattedInsert("\n\n\n", "START", false, false);
 
-                    requests.Add(CreateInsertTextRequest($"{Data.University ?? "Назва Університету"}\n"));
-                    requests.Add(CreateInsertTextRequest($"Міністерство освіти і науки України\n"));
+                string workTypeUser = "КУРСОВА РОБОТА"; if ((data.Discipline ?? "").ToLower().Contains("програмування")) workTypeUser = "КУРСОВА РОБОТА З ОБ’ЄКТНО-ОРІЄНТОВАНОГО ПРОГРАМУВАННЯ";
+                AddFormattedInsert($"на тему «{GetText(data.Topic)}»\n", "CENTER", false, true);
+                AddFormattedInsert($"{workTypeUser}\n", "CENTER", true, false);
+                AddFormattedInsert("\n\n\n\n\n\n\n", "CENTER", false, false);
 
-                    requests.Add(CreateInsertTextRequest($"{Data.City ?? "Місто"}, {Data.Year}\n"));
-                    requests.Add(CreateInsertTextRequest($"\n\n\n"));
+                AddFormattedInsert($"Кафедра {GetText(data.Department)}\n", "CENTER", false, false);
+                AddFormattedInsert($"Факультет {GetText(data.Faculty)}\n", "CENTER", false, false);
+                AddFormattedInsert($"{GetText(data.University)}\n", "CENTER", true, false);
+                AddFormattedInsert("Міністерство освіти і науки України\n", "CENTER", false, false);
+                AddFormattedInsert("\n\n\n", "CENTER", false, false);
 
-                    requests.Add(CreateInsertTextRequest($"{Data.SuperVisorFullName ?? "ПІБ Керівника"}\n"));
-                    requests.Add(CreateInsertTextRequest($"{Data.SuperVisorPosition ?? "Посада"}\n"));
-                    requests.Add(CreateInsertTextRequest($"Перевірив:\n"));
-                    requests.Add(CreateInsertTextRequest($"\n\n"));
 
-                    requests.Add(CreateInsertTextRequest($"{Data.StudentsFullName ?? "ПІБ Студента"}\n"));
-                    requests.Add(CreateInsertTextRequest($"студент гр. {Data.Group ?? "Група"}\n"));
-                    requests.Add(CreateInsertTextRequest($"Виконав:\n"));
-                    requests.Add(CreateInsertTextRequest($"\n\n\n\n"));
-
-                    requests.Add(CreateInsertTextRequest($"На тему: «{Data.Topic ?? "Тема роботи"}»\n"));
-                    requests.Add(CreateInsertTextRequest($"по дисципліні «{Data.Discipline ?? "Назва дисципліни"}»\n"));
-                    requests.Add(CreateInsertTextRequest($"Курсова Робота\n"));
-                    requests.Add(CreateInsertTextRequest($"\n\n\n\n\n"));
-
-                    requests.Add(CreateInsertTextRequest($"Кафедра {Data.Department ?? "Назва Кафедри"}\n"));
-                    requests.Add(CreateInsertTextRequest($"Факультет {Data.Faculty ?? "Назва Факультету"}\n"));
-                    requests.Add(CreateInsertTextRequest($"\n\n\n\n\n"));
-
-                    requests.Add(CreateInsertTextRequest($"{Data.University ?? "Назва Університету"}\n"));
-                    requests.Add(CreateInsertTextRequest($"Міністерство освіти і науки України\n"));
-
-                    if (requests.Count > 0)
-                    {
-                        BatchUpdateDocumentRequest batchUpdateRequest = new BatchUpdateDocumentRequest { Requests = requests };
-                        Debug.WriteLine($"Надсилаємо {requests.Count} запитів BatchUpdate для document ID: {documentId}");
-                        await docsService.Documents.BatchUpdate(batchUpdateRequest, documentId).ExecuteAsync();
-                        Debug.WriteLine($"Текст успішно додано до Google Doc ID: {documentId}");
-                        Debug.WriteLine($"Текст успішно додано до Google Doc IDd: {documentId}");
-                    }
-                }
-                catch (Exception ex)
+                if (requests.Count > 0)
                 {
-                    Debug.WriteLine($"Помилка при генерації або оновленні Google Doc (ID: {documentId ?? "не створено"}): {ex.ToString()}");
-                    throw;
-
+                    requests.Reverse();
+                    BatchUpdateDocumentRequest batchUpdateRequest = new BatchUpdateDocumentRequest { Requests = requests };
+                    Debug.WriteLine($"Надсилаємо {requests.Count} запитів BatchUpdate для document ID: {documentId}");
+                    await docsService.Documents.BatchUpdate(batchUpdateRequest, documentId).ExecuteAsync();
+                    Debug.WriteLine($"Документ Google Doc ID: {documentId} оновлено.");
                 }
             }
-            finally
-            {
-
-            }
-
+            catch (Exception ex) { Debug.WriteLine($"Помилка при генерації Google Doc: {ex.ToString()}"); throw; }
         }
     }
 }

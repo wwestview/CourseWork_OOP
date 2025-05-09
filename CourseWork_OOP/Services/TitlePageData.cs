@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CourseWork_OOP.Services
 {
-    public class CoverPageData
+    public class TitlePageData
     {
         public string? StudentsFullName { get; set; }
         public string? SuperVisorFullName { get; set; }
@@ -19,5 +16,10 @@ namespace CourseWork_OOP.Services
         public string? Department { get; set; }
         public string? City { get; set; } = "Черкаси";
         public int Year { get; set; } = DateTime.Now.Year;
+        public string? Sex { get; set; }
+        public string? CourseNumber { get; set; }
+        public string? SpecialtyName { get; set; }
+        public List<string> CommissionMemberNames { get; set; } = new List<string>();
+
     }
 }
