@@ -23,7 +23,6 @@ namespace CourseWork_OOP.Services
             return defaultValue;
         }
 
-        private static string GetText(string? text, string defaultText = "") => text ?? defaultText;
 
         public static async Task<List<TitlePageData>> ReadSheetAsync(string spreadSheetId, string range, CancellationToken cancellationToken = default)
         {
@@ -52,72 +51,65 @@ namespace CourseWork_OOP.Services
                 if (values != null && values.Count > 0)
                 {
                     Debug.WriteLine($"Отримано {values.Count} рядків даних.");
-                    int rowNumber = 5; 
+                    int currentSheetRowNumber = 5;
 
                     foreach (var row in values)
                     {
                         if (row == null || row.All(cell => cell == null || string.IsNullOrWhiteSpace(cell.ToString())))
                         {
-                            Debug.WriteLine($"Пропущено порожній рядок {rowNumber}.");
-                            rowNumber++;
+                            Debug.WriteLine($"Пропущено порожній рядок (фактичний номер у таблиці: {currentSheetRowNumber}).");
+                            currentSheetRowNumber++;
                             continue;
                         }
 
-                        //  діапазон B:H 7 стовпців 
-                        const int expectedColumnCount = 7;
+                        // B=0, C=1, D=2, E=3, F=4
+                        const int expectedCoreColumnCount = 5;
 
-                        if (row.Count < expectedColumnCount)
+                        if (row.Count < expectedCoreColumnCount)
                         {
-                            Debug.WriteLine($"Пропущено рядок {rowNumber} через недостатню кількість стовпців (очікувалось >= {expectedColumnCount}, отримано {row.Count}). Діапазон: {range}");
-                            rowNumber++;
+                            Debug.WriteLine($"Пропущено рядок {currentSheetRowNumber} через недостатню кількість основних стовпців (очікувалось >= {expectedCoreColumnCount}, отримано {row.Count}). Діапазон: {range}");
+                            currentSheetRowNumber++;
                             continue;
                         }
 
                         try
                         {
-                            // row[0] -> стовпець B
-                            // row[1] -> стовпець C
-                            // row[6] -> стовпець H 
                             var studentData = new TitlePageData
                             {
-                                SuperVisorFullName = GetRowValue(row, 0), //  стовпець B
-                                Topic = GetRowValue(row, 1), //  стовпець C
-                                StudentsFullName = GetRowValue(row, 2), //  стовпець D
-                                Group = GetRowValue(row, 3), //  стовпець E
-                                SuperVisorPosition = GetRowValue(row, 4), //  стовпець F
-                                Sex = GetRowValue(row, 5, "Чол"), //  стовпець G 
+                                SuperVisorFullName = GetRowValue(row, 0), // Стовпець B
+                                Topic = GetRowValue(row, 1), // Стовпець C
+                                StudentsFullName = GetRowValue(row, 2), // Стовпець D
+                                Group = GetRowValue(row, 3), // Стовпець E
+                                SuperVisorPosition = GetRowValue(row, 4), // Стовпець F
+
+                                Sex = GetRowValue(row, 5, "Чол"),
 
                                 CommissionMemberNames = (row.Count > 6 && row[6] != null)
                                                       ? GetRowValue(row, 6, "")
-                                                            ?.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries) 
+                                                            ?.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries)
                                                             .Select(s => s.Trim())
                                                             .Take(3)
                                                             .ToList() ?? new List<string>()
                                                       : new List<string>(),
 
-                                CourseNumber = GetText(null, "2"),
-                                SpecialtyName = GetText(null, "спеціальності 121 «Інженерія програмного забезпечення»"),
-                                Discipline = GetText(null, "Об’єктно-орієнтоване програмування".ToUpper()),
-                                University = GetText(null, "Черкаський національний університет імені Богдана Хмельницького"),
-                                Faculty = GetText(null, "обчислювальної Техніки Інтелектуальних та Управляючих Систем"),
-                                Department = GetText(null, "програмного забезпечення автоматизованих систем"),
                             };
+
 
                             if (!string.IsNullOrWhiteSpace(studentData.StudentsFullName))
                             {
                                 studentDataList.Add(studentData);
-                                Debug.WriteLine($"Додано дані для студента: {studentData.StudentsFullName}");
+                                Debug.WriteLine($"Додано дані для студента: {studentData.StudentsFullName}, Комісія: [{string.Join("; ", studentData.CommissionMemberNames)}]");
                             }
                             else
                             {
-                                Debug.WriteLine($"Пропущено рядок {rowNumber} через відсутність ПІБ студента.");
+                                Debug.WriteLine($"Пропущено рядок {currentSheetRowNumber} через відсутність ПІБ студента.");
                             }
                         }
                         catch (Exception parseEx)
                         {
-                            Debug.WriteLine($"Помилка парсингу рядка {rowNumber}: {parseEx.Message}");
+                            Debug.WriteLine($"Помилка парсингу рядка {currentSheetRowNumber}: {parseEx.Message}");
                         }
-                        rowNumber++;
+                        currentSheetRowNumber++;
                     }
                 }
                 else

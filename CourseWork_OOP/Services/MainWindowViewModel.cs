@@ -1,8 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CourseWork_OOP.Interfaces;
-using CourseWork_OOP.Services; 
-using Google.Apis.Sheets.v4.Data;
+using CourseWork_OOP.Services;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -17,35 +16,35 @@ namespace CourseWork_OOP
     {
         private readonly IEnumerable<ITitlePageGenerator> _availableGenerators;
 
-        [ObservableProperty] private string university = "Університет";
-        [ObservableProperty] private string faculty = "Факультет";
-        [ObservableProperty] private string department = "Кафедра ";
-        [ObservableProperty] private string discipline = "Дисципліна";
-        [ObservableProperty] private string topic = "Тема";
+        [ObservableProperty] private string university = "Черкаський національний університет імені Богдана Хмельницького";
+        [ObservableProperty] private string faculty = "обчислювальної техніки, інтелектуальних та управляючих систем";
+        [ObservableProperty] private string department = "програмного забезпечення автоматизованих систем\r\n\r\n";
+        [ObservableProperty] private string discipline = "ОБ'ЄКТО-ОРІЄНТОВАНОГО ПРОГРАМУВАННЯ";
+        [ObservableProperty] private string topic = "Генератор титулок";
         [ObservableProperty] private string studentFullName = "Прізвище Ім'я По-батькові";
-        [ObservableProperty] private string studentGroup = "Група";
-        [ObservableProperty] private string supervisorFullName = "Прізвище Ім'я По-батькові Керівника";
+        [ObservableProperty] private string studentGroup = "КС-00";
+        [ObservableProperty] private string supervisorFullName = "Прізвище І.П. Керівника";
         [ObservableProperty] private string supervisorPosition = "Посада Керівника";
-        [ObservableProperty] private string city = "Місто";
+        [ObservableProperty] private string city = "Черкаси";
         [ObservableProperty] private int year = DateTime.Now.Year;
 
         [ObservableProperty] private bool isMaleSelected = true;
         [ObservableProperty] private bool isFemaleSelected = false;
-        [ObservableProperty] private string courseNumber = "Курс";
-        [ObservableProperty] private string specialtyName = "спеціальність";
-        [ObservableProperty] private string commissionInputText = "";
-
+        [ObservableProperty] private string courseNumber = "2";
+        [ObservableProperty] private string specialtyName = "спеціальності 121 «Інженерія програмного забезпечення»";
+        [ObservableProperty] private string commissionInputText = ""; 
         [ObservableProperty] private bool isManualSource = true;
         [ObservableProperty] private bool isSheetSource = false;
-        [ObservableProperty] private string spreadsheetId = "Таблиця з курсовими"; 
-        [ObservableProperty] private string sheetRange = "Діапазон"; 
+        [ObservableProperty] private string spreadsheetId = "1dxJM2Gpj9YfyPVUEzMgQyjl4jc_QAF5U0sD2im8oxj4"; 
+        [ObservableProperty] private string sheetRange = "ООП!B5:H"; 
 
         [ObservableProperty] private bool isLatexSelected = true;
         [ObservableProperty] private bool isHtmlSelected = true;
         [ObservableProperty] private bool isPlainTextSelected = true;
-        [ObservableProperty] private bool isDocsSelected = true; 
+        [ObservableProperty] private bool isDocsSelected = true;
 
         [ObservableProperty] private string statusMessage = "Готово";
+
 
         public MainWindowViewModel(IEnumerable<ITitlePageGenerator> generators)
         {
@@ -57,16 +56,16 @@ namespace CourseWork_OOP
         private async Task GenerateCoverPagesAsync()
         {
             System.Diagnostics.Debug.WriteLine($"--- GenerateCoverPagesAsync ЗАПУЩЕНО о {DateTime.Now:HH:mm:ss.fff} ---");
-            StatusMessage = "Перевірка налаштувань..."; 
+            StatusMessage = "Перевірка налаштувань...";
             List<TitlePageData> dataToProcess = new List<TitlePageData>();
-            string currentSex = isMaleSelected ? "Чол" : "Жін"; 
+            string currentSex = IsMaleSelected ? "Чол" : "Жін";
 
             try
             {
-                if (IsManualSource) 
+                if (IsManualSource)
                 {
                     StatusMessage = "Обробка даних, введених вручну...";
-                    List<string> commissionNames = commissionInputText? 
+                    List<string> commissionNames = CommissionInputText?
                         .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                         .Take(3).ToList() ?? new List<string>();
 
@@ -84,8 +83,8 @@ namespace CourseWork_OOP
                         City = this.City,
                         Year = this.Year,
                         Sex = currentSex,
-                        CourseNumber = this.courseNumber,         
-                        SpecialtyName = this.specialtyName,       
+                        CourseNumber = this.CourseNumber,
+                        SpecialtyName = this.SpecialtyName,
                         CommissionMemberNames = commissionNames
                     };
 
@@ -93,26 +92,36 @@ namespace CourseWork_OOP
                     { StatusMessage = "Відсутні ПІБ студента або Тема роботи."; MessageBox.Show("Будь ласка, введіть ПІБ студента та Тему роботи.", "Відсутні Дані"); return; }
                     dataToProcess.Add(manualData);
                 }
-                else if (IsSheetSource) 
+                else if (IsSheetSource)
                 {
                     StatusMessage = "Читання даних з Google Sheets...";
-                    if (string.IsNullOrWhiteSpace(spreadsheetId) || string.IsNullOrWhiteSpace(sheetRange)) 
+                    if (string.IsNullOrWhiteSpace(SpreadsheetId) || string.IsNullOrWhiteSpace(SheetRange))
                     { StatusMessage = "Не вказано ID таблиці або діапазон."; MessageBox.Show("Будь ласка, вкажіть ID таблиці та діапазон для читання.", "Налаштування Google Sheets"); return; }
 
-                    dataToProcess = await GoogleSheet.ReadSheetAsync(this.spreadsheetId, this.sheetRange); 
+                    dataToProcess = await GoogleSheet.ReadSheetAsync(this.SpreadsheetId, this.SheetRange);
                     if (dataToProcess == null || dataToProcess.Count == 0) { StatusMessage = "Дані студентів не знайдено у таблиці."; return; }
 
                     foreach (var dataItem in dataToProcess)
                     {
                         dataItem.Sex ??= currentSex;
-                        dataItem.CourseNumber ??= this.courseNumber;     
-                        dataItem.SpecialtyName ??= this.specialtyName;   
+                        dataItem.CourseNumber ??= this.CourseNumber; 
+                        dataItem.SpecialtyName ??= this.SpecialtyName; 
+
+                        dataItem.University ??= this.University;
+                        dataItem.Faculty ??= this.Faculty;
+                        dataItem.Department ??= this.Department;
+                        dataItem.Discipline ??= this.Discipline;
+
+                         if (dataItem.CommissionMemberNames == null || !dataItem.CommissionMemberNames.Any())
+                         {
+                             dataItem.CommissionMemberNames = new List<string> { "Онищенко Б.О", "Порубльов І.М", "Гребенович Ю.Є" }; 
+                         }
                     }
                 }
                 else { StatusMessage = "Джерело даних не вибрано."; return; }
 
                 var selectedGenerators = _availableGenerators.Where(g =>
-                     (IsLatexSelected && g is LaTeX) || 
+                     (IsLatexSelected && g is LaTeX) ||
                      (IsHtmlSelected && g is Html) ||
                      (IsPlainTextSelected && g is PlainText) ||
                      (IsDocsSelected && g is Docs)
@@ -159,6 +168,7 @@ namespace CourseWork_OOP
                 StatusMessage = finalMessage;
             }
             catch (Exception ex) { StatusMessage = $"Критична помилка: {ex.Message}"; Debug.WriteLine($"Критична помилка: {ex.ToString()}"); }
+            // IsBusy видалено
         }
     }
 }

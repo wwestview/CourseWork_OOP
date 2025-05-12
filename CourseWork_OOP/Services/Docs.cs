@@ -69,7 +69,6 @@ namespace CourseWork_OOP.Services
                         });
                     }
                 };
-                // ------------------------------------
 
                 AddFormattedInsert($"{GetText(data.City)} – {data.Year} рік\n", "CENTER", false, false);
                 AddFormattedInsert("\n\n", "START", false, false);
