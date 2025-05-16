@@ -27,24 +27,20 @@ namespace CourseWork_OOP
         [ObservableProperty] private string supervisorPosition = "Посада Керівника";
         [ObservableProperty] private string city = "Черкаси";
         [ObservableProperty] private int year = DateTime.Now.Year;
-
         [ObservableProperty] private bool isMaleSelected = true;
         [ObservableProperty] private bool isFemaleSelected = false;
         [ObservableProperty] private string courseNumber = "2";
         [ObservableProperty] private string specialtyName = "спеціальності 121 «Інженерія програмного забезпечення»";
-        [ObservableProperty] private string commissionInputText = ""; 
+        [ObservableProperty] private string commissionInputText = "";
         [ObservableProperty] private bool isManualSource = true;
         [ObservableProperty] private bool isSheetSource = false;
-        [ObservableProperty] private string spreadsheetId = "1dxJM2Gpj9YfyPVUEzMgQyjl4jc_QAF5U0sD2im8oxj4"; 
-        [ObservableProperty] private string sheetRange = "ООП!B5:H"; 
-
+        [ObservableProperty] private string spreadsheetId = "1dxJM2Gpj9YfyPVUEzMgQyjl4jc_QAF5U0sD2im8oxj4";
+        [ObservableProperty] private string sheetRange = "ООП!B5:H";
         [ObservableProperty] private bool isLatexSelected = true;
         [ObservableProperty] private bool isHtmlSelected = true;
         [ObservableProperty] private bool isPlainTextSelected = true;
         [ObservableProperty] private bool isDocsSelected = true;
-
         [ObservableProperty] private string statusMessage = "Готово";
-
 
         public MainWindowViewModel(IEnumerable<ITitlePageGenerator> generators)
         {
@@ -87,47 +83,35 @@ namespace CourseWork_OOP
                         SpecialtyName = this.SpecialtyName,
                         CommissionMemberNames = commissionNames
                     };
-
-                    if (string.IsNullOrWhiteSpace(manualData.StudentsFullName) || string.IsNullOrWhiteSpace(manualData.Topic))
-                    { StatusMessage = "Відсутні ПІБ студента або Тема роботи."; MessageBox.Show("Будь ласка, введіть ПІБ студента та Тему роботи.", "Відсутні Дані"); return; }
+                    if (string.IsNullOrWhiteSpace(manualData.StudentsFullName) || string.IsNullOrWhiteSpace(manualData.Topic)) { StatusMessage = "Відсутні ПІБ студента або Тема роботи."; MessageBox.Show("Будь ласка, введіть ПІБ студента та Тему роботи.", "Відсутні Дані"); return; }
                     dataToProcess.Add(manualData);
                 }
                 else if (IsSheetSource)
                 {
                     StatusMessage = "Читання даних з Google Sheets...";
-                    if (string.IsNullOrWhiteSpace(SpreadsheetId) || string.IsNullOrWhiteSpace(SheetRange))
-                    { StatusMessage = "Не вказано ID таблиці або діапазон."; MessageBox.Show("Будь ласка, вкажіть ID таблиці та діапазон для читання.", "Налаштування Google Sheets"); return; }
-
+                    if (string.IsNullOrWhiteSpace(SpreadsheetId) || string.IsNullOrWhiteSpace(SheetRange)) { StatusMessage = "Не вказано ID таблиці або діапазон."; MessageBox.Show("Будь ласка, вкажіть ID таблиці та діапазон для читання.", "Налаштування Google Sheets"); return; }
                     dataToProcess = await GoogleSheet.ReadSheetAsync(this.SpreadsheetId, this.SheetRange);
-                    if (dataToProcess == null || dataToProcess.Count == 0) { StatusMessage = "Дані студентів не знайдено у таблиці."; return; }
-
+                    if (dataToProcess == null || !dataToProcess.Any()) { StatusMessage = "Дані студентів не знайдено у таблиці або сталася помилка."; return; } 
                     foreach (var dataItem in dataToProcess)
                     {
-                        dataItem.Sex ??= currentSex;
-                        dataItem.CourseNumber ??= this.CourseNumber; 
-                        dataItem.SpecialtyName ??= this.SpecialtyName; 
-
-                        dataItem.University ??= this.University;
-                        dataItem.Faculty ??= this.Faculty;
-                        dataItem.Department ??= this.Department;
-                        dataItem.Discipline ??= this.Discipline;
-
-                         if (dataItem.CommissionMemberNames == null || !dataItem.CommissionMemberNames.Any())
-                         {
-                             dataItem.CommissionMemberNames = new List<string> { "Онищенко Б.О", "Порубльов І.М", "Гребенович Ю.Є" }; 
-                         }
+                        dataItem.Sex ??= currentSex; dataItem.CourseNumber ??= this.CourseNumber; dataItem.SpecialtyName ??= this.SpecialtyName;
+                        dataItem.University ??= this.University; dataItem.Faculty ??= this.Faculty; dataItem.Department ??= this.Department;
+                        dataItem.Discipline ??= this.Discipline; dataItem.City ??= this.City; dataItem.Year = this.Year;
+                        if (dataItem.CommissionMemberNames == null || !dataItem.CommissionMemberNames.Any())
+                        {
+                            dataItem.CommissionMemberNames = new List<string> { "Онищенко Б.О", "Порубльов І.М", "Гребенович Ю.Є" };
+                        }
                     }
                 }
                 else { StatusMessage = "Джерело даних не вибрано."; return; }
 
-                var selectedGenerators = _availableGenerators.Where(g =>
-                     (IsLatexSelected && g is LaTeX) ||
-                     (IsHtmlSelected && g is Html) ||
-                     (IsPlainTextSelected && g is PlainText) ||
-                     (IsDocsSelected && g is Docs)
-                ).ToList();
+                var selectedGenerators = new List<ITitlePageGenerator>();
+                if (IsLatexSelected && _availableGenerators.FirstOrDefault(g => g is LaTeX) is { } latexGen) selectedGenerators.Add(latexGen);
+                if (IsHtmlSelected && _availableGenerators.FirstOrDefault(g => g is Html) is { } htmlGen) selectedGenerators.Add(htmlGen);
+                if (IsPlainTextSelected && _availableGenerators.FirstOrDefault(g => g is PlainText) is { } plainTextGen) selectedGenerators.Add(plainTextGen);
+                if (IsDocsSelected && _availableGenerators.FirstOrDefault(g => g is Docs) is { } docsGen) selectedGenerators.Add(docsGen);
 
-                if (selectedGenerators.Count == 0) { StatusMessage = "Не вибрано жодного формату для генерації."; MessageBox.Show("Будь ласка, виберіть хоча б один формат.", "Формат не вибрано"); return; }
+                if (!selectedGenerators.Any()) { StatusMessage = "Не вибрано жодного формату для генерації."; MessageBox.Show("Будь ласка, виберіть хоча б один формат.", "Формат не вибрано"); return; }
 
                 StatusMessage = $"Отримано {dataToProcess.Count} записів. Обрано {selectedGenerators.Count} формат(ів). Починаю генерацію...";
                 string outputDirectory = Path.Combine(AppContext.BaseDirectory, "Generated_TitlePages");
@@ -139,32 +123,51 @@ namespace CourseWork_OOP
                 {
                     TitlePageData currentStudentData = dataToProcess[i];
                     if (string.IsNullOrWhiteSpace(currentStudentData.StudentsFullName) || string.IsNullOrWhiteSpace(currentStudentData.Topic))
-                    {
-                        totalErrors.Add($"Пропуск запису #{i + 1}: Відсутнє ПІБ або Тема.");
-                        continue;
-                    }
+                    { totalErrors.Add($"Пропуск запису #{i + 1}: Відсутнє ПІБ або Тема."); continue; }
+
                     string studentIdentifier = $"{(IsSheetSource ? $"({i + 1}/{dataToProcess.Count}) " : "")}{currentStudentData.StudentsFullName}";
                     StatusMessage = $"Генерація для {studentIdentifier}...";
 
                     foreach (var generator in selectedGenerators)
                     {
-                        string formatName = "Unknown"; string fileExtension = "";
-                        if (generator is LaTeX) { formatName = "LaTeX"; fileExtension = ".tex"; }
-                        else if (generator is Html) { formatName = "Html"; fileExtension = ".html"; }
-                        else if (generator is PlainText) { formatName = "PlainText"; fileExtension = ".txt"; }
-                        else if (generator is Docs) { formatName = "GoogleDoc"; fileExtension = ""; }
+                        string formatName = ((BaseTitlePageGenerator)generator).FormatName;
+                        string fileExtension = ((BaseTitlePageGenerator)generator).FileExtension;
 
-                        string safeStudentName = string.Join("_", currentStudentData.StudentsFullName.Split(Path.GetInvalidFileNameChars()));
-                        string baseFileName = $"Титулка_{safeStudentName}_{formatName}_{DateTime.Now:yyyyMMddHHmmss}";
-                        string argumentForGenerateAsync = (generator is Docs) ? baseFileName : Path.Combine(outputDirectory, baseFileName);
+                        string safeStudentNamePart = string.Join("_", currentStudentData.StudentsFullName?.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries) ?? new string[] { "UnknownStudent" });
+                        if (string.IsNullOrWhiteSpace(safeStudentNamePart)) safeStudentNamePart = "UnknownStudent";
+
+                        string baseFileNameComponent = $"Титулка_{safeStudentNamePart}_{formatName.Replace(" ", "_")}_{DateTime.Now:yyyyMMddHHmmss}";
+
+                        string argumentForGenerateAsync;
+                        if (generator is Docs) 
+                        {
+                            argumentForGenerateAsync = baseFileNameComponent; 
+                        }
+                        else
+                        {
+                            argumentForGenerateAsync = Path.Combine(outputDirectory, baseFileNameComponent);
+                        }
 
                         Debug.WriteLine($"Запуск генерації {formatName} для {studentIdentifier} з аргументом: {argumentForGenerateAsync}");
-                        try { await generator.GenerateAsync(currentStudentData, argumentForGenerateAsync); generatedFileCount++; }
-                        catch (Exception ex) { string msg = $"Помилка {formatName} для {studentIdentifier}: {ex.Message}"; Debug.WriteLine(msg + $"\n{ex.StackTrace}"); totalErrors.Add(msg); }
+                        try
+                        {
+                            await generator.GenerateAsync(currentStudentData, argumentForGenerateAsync);
+                            generatedFileCount++;
+                        }
+                        catch (Exception ex)
+                        {
+                            string msg = $"Помилка {formatName} для {studentIdentifier}: {ex.Message}";
+                            Debug.WriteLine(msg + $"\n{ex.StackTrace}"); totalErrors.Add(msg);
+                        }
                     }
                 }
                 string finalMessage = $"Завершено. Оброблено записів: {dataToProcess.Count}. ";
                 finalMessage += (totalErrors.Count == 0) ? $"Успішно згенеровано {generatedFileCount} файлів/документів." : $"Успішно: {generatedFileCount}. Помилок: {totalErrors.Count}.";
+                if (totalErrors.Any())
+                {
+                    finalMessage += "\nДеталі помилок див. у Debug Output або у вікні з помилками."; // Додано
+                    MessageBox.Show("Під час генерації виникли помилки:\n" + string.Join("\n", totalErrors.Take(5)) + (totalErrors.Count > 5 ? "\n...та інші." : ""), "Помилки генерації", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
                 StatusMessage = finalMessage;
             }
             catch (Exception ex) { StatusMessage = $"Критична помилка: {ex.Message}"; Debug.WriteLine($"Критична помилка: {ex.ToString()}"); }

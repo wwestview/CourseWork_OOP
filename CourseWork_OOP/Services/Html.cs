@@ -1,27 +1,25 @@
-﻿using CourseWork_OOP.Interfaces;
-using CourseWork_OOP.Services; 
-using System;
+﻿using System;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using System.Web; 
+using System.Web;
+using System.Diagnostics;
 
 namespace CourseWork_OOP.Services
 {
-    public class Html : ITitlePageGenerator
+    public class Html : BaseTitlePageGenerator 
     {
+        public override string FormatName => "HTML";
+        public override string FileExtension => ".html";
+
         public Html() { }
 
-        private string EncHtml(string? text, string defaultText = "") => HttpUtility.HtmlEncode(text ?? defaultText);
+        private string EncHtml(string? text, string defaultText = "") => HttpUtility.HtmlEncode(GetText(text, defaultText)); 
 
-        private string GetText(string? text, string defaultPlaceholder = "") => string.IsNullOrWhiteSpace(text) ? defaultPlaceholder : text;
-
-
-        public async Task GenerateAsync(TitlePageData data, string argument)
+        public override async Task GenerateAsync(TitlePageData data, string baseOutputNameWithDir) 
         {
             var context = new StringBuilder();
             string nbsp = "&nbsp;";
-
             context.AppendLine("<!DOCTYPE html>");
             context.AppendLine("<html lang=\"uk\">");
             context.AppendLine("<head>");
@@ -29,26 +27,12 @@ namespace CourseWork_OOP.Services
             context.AppendLine($"  <title>Титульна сторінка - {EncHtml(GetText(data.Topic, "[Тема роботи]"))}</title>");
             context.AppendLine("  <style>");
             context.AppendLine("    body { margin: 0; padding: 0; background-color: #eee; }");
-            context.AppendLine("    .page-wrapper {");
-            context.AppendLine("      width: 21cm;");
-            context.AppendLine("      min-height: 29.7cm;");
-            context.AppendLine("      padding: 2cm 1.5cm 2cm 3cm;");
-            context.AppendLine("      margin: 1cm auto;");
-            context.AppendLine("      border: 1px solid #ccc;");
-            context.AppendLine("      background-color: #fff;");
-            context.AppendLine("      box-shadow: 0 0 10px rgba(0,0,0,0.1);");
-            context.AppendLine("      box-sizing: border-box;");
-            context.AppendLine("      font-family: 'Times New Roman', Times, serif;");
-            context.AppendLine("      font-size: 14pt;");
-            context.AppendLine("      line-height: 1.5;");
-            context.AppendLine("      color: #000;");
-            context.AppendLine("      position: relative;");
-            context.AppendLine("    }");
+            context.AppendLine("    .page-wrapper { width: 21cm; min-height: 29.7cm; padding: 2cm 1.5cm 2cm 3cm; margin: 1cm auto; border: 1px solid #ccc; background-color: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1); box-sizing: border-box; font-family: 'Times New Roman', Times, serif; font-size: 14pt; line-height: 1.5; color: #000; position: relative; }");
             context.AppendLine("    p { margin-top:0; margin-right:0; margin-bottom:4.0pt; margin-left:0; line-height:1.5; font-size: 14pt; font-family: 'Times New Roman', serif; }");
             context.AppendLine("    .centered { text-align: center; }");
             context.AppendLine("    .bold { font-weight: bold; }");
-            context.AppendLine("    .large { font-size: 16pt; }");
-            context.AppendLine("    .small { font-size: 9.0pt; }");
+            context.AppendLine("    .large { font-size: 16pt; }"); 
+            context.AppendLine("    .small { font-size: 9.0pt; }"); 
             context.AppendLine("    .no-wrap { white-space: nowrap; }");
             context.AppendLine("    .underline-placeholder { border-bottom: 1px solid black; display: inline-block; }");
             context.AppendLine("    .underline-short { min-width: 100px; }");
@@ -74,7 +58,6 @@ namespace CourseWork_OOP.Services
             context.AppendLine("</head>");
             context.AppendLine("<body>");
             context.AppendLine("  <div class=\"page-wrapper\">");
-
             context.AppendLine("    <div class=\"block-header\">");
             context.AppendLine($"      <p>Міністерство освіти і науки України</p>");
             context.AppendLine($"      <p class=\"block-univer \">{EncHtml(GetText(data.University, "[Назва університету]"))}</p>");
@@ -83,67 +66,60 @@ namespace CourseWork_OOP.Services
             context.AppendLine($"      <p>Факультет {EncHtml(GetText(data.Faculty, "[Назва факультету]"))}</p>");
             context.AppendLine($"      <p>Кафедра {EncHtml(GetText(data.Department, "[Назва кафедри]"))}</p>");
             context.AppendLine("    </div>");
-
             context.AppendLine("    <div class=\"block-title\">");
             string workType;
             string disciplineText = GetText(data.Discipline);
-            if (!string.IsNullOrWhiteSpace(disciplineText))
-            {
-                workType = $"КУРСОВА РОБОТА З ДИСЦИПЛІНИ «{EncHtml(disciplineText)}»";
-            }
-            else
-            {
-                workType = "КУРСОВА РОБОТА"; 
-            }
-            context.AppendLine($"      <p class=\"large\">{EncHtml(workType)}</p>");
+            if (!string.IsNullOrWhiteSpace(disciplineText)) { workType = $"КУРСОВА РОБОТА З ДИСЦИПЛІНИ «{EncHtml(disciplineText)}»"; }
+            else { workType = "КУРСОВА РОБОТА"; }
+            context.AppendLine($"      <p class=\"large\">{EncHtml(workType)}</p>"); 
             context.AppendLine($"      <p>на тему «{EncHtml(GetText(data.Topic, "[Тема роботи]"))}»</p>");
             context.AppendLine("    </div>");
-
             context.AppendLine("    <div class=\"block-executor right-aligned\">");
-            context.AppendLine("        <div style=\"margin-bottom: 1cm;\">");
+            context.AppendLine("      <div style=\"margin-bottom: 1cm;\">");
             string studentLabel = (GetText(data.Sex) == "Жін") ? "Студентки" : "Студента";
-            context.AppendLine($"            <p>{studentLabel} {EncHtml(GetText(data.CourseNumber, "2"))} курсу, групи {EncHtml(GetText(data.Group, "[Група]"))}</p>");
-            context.AppendLine($"            <p>{EncHtml(GetText(data.SpecialtyName, "спеціальності 121 «Інженерія програмного забезпечення»"))}</p>");
-            context.AppendLine($"            <p class=\"pii-line\" style=\"margin-top: 1em;\">{EncHtml(GetText(data.StudentsFullName, "[ПІБ студента]"))}</p>");
-            context.AppendLine("        </div>");
-            context.AppendLine("        <div>");
-            context.AppendLine($"            <p class=\"no-wrap\">Керівник:{nbsp}{nbsp}{EncHtml(GetText(data.SuperVisorPosition, "[посада]"))},{nbsp}{EncHtml(GetText(data.SuperVisorFullName, "[ПІБ Керівника]"))}</p>");
-            context.AppendLine($"            <p class=\"small\" style=\"text-align:right;margin-right: 4.5em;\">(посада, вчене звання, науковий ступінь, прізвище та ініціали)</p>");
-            context.AppendLine("        </div>");
+            context.AppendLine($"        <p>{studentLabel} {EncHtml(GetText(data.CourseNumber, "2"))} курсу, групи {EncHtml(GetText(data.Group, "[Група]"))}</p>");
+            context.AppendLine($"        <p>{EncHtml(GetText(data.SpecialtyName, "спеціальності 121 «Інженерія програмного забезпечення»"))}</p>");
+            context.AppendLine($"        <p class=\"pii-line\" style=\"margin-top: 1em;\">{EncHtml(GetText(data.StudentsFullName, "[ПІБ студента]"))}</p>");
+            context.AppendLine("      </div>");
+            context.AppendLine("      <div>");
+            context.AppendLine($"        <p class=\"no-wrap\">Керівник:{nbsp}{nbsp}{EncHtml(GetText(data.SuperVisorPosition, "[посада]"))},{nbsp}{EncHtml(GetText(data.SuperVisorFullName, "[ПІБ Керівника]"))}</p>");
+            context.AppendLine($"        <p class=\"small\" style=\"text-align:right;margin-right: 4.5em;\">(посада, вчене звання, науковий ступінь, прізвище та ініціали)</p>");
+            context.AppendLine("      </div>");
             context.AppendLine("    </div>");
-
             context.AppendLine("    <div class=\"block-evaluation right-aligned\">");
-            context.AppendLine("        <p><span>Оцінка за шкалою:</span><span class=\"underline-inline\">&nbsp;</span></p>");
-            context.AppendLine("        <p class=\"small\" style=\"text-align:right; margin-right: 1em;\" >(національною, кількість балів, ECTS)</p>");
+            context.AppendLine("      <p><span>Оцінка за шкалою:</span><span class=\"underline-inline\">&nbsp;</span></p>");
+            context.AppendLine("      <p class=\"small\" style=\"text-align:right; margin-right: 1em;\" >(національною, кількість балів, ECTS)</p>");
             context.AppendLine("    </div>");
-
             context.AppendLine("    <div class=\"block-commission right-aligned\">");
             for (int i = 0; i < 3; i++)
             {
                 string memberName = (i < data.CommissionMemberNames?.Count && !string.IsNullOrWhiteSpace(data.CommissionMemberNames[i]))
                                     ? EncHtml(data.CommissionMemberNames[i])
                                     : "<span class=\"underline-placeholder underline-medium\">&nbsp;</span>";
-
                 string commissionLabelText = (i == 0) ? "Члени комісії:" : "&nbsp;";
-
-                context.AppendLine($"        <p class=\"commission-line\"><span class=\"commission-label\">{commissionLabelText}</span><span class=\"commission-signature-box\"><span class=\"underline-placeholder underline-short\">&nbsp;</span></span><span class=\"commission-pii-box\">{memberName}</span></p>");
-
+                context.AppendLine($"      <p class=\"commission-line\"><span class=\"commission-label\">{commissionLabelText}</span><span class=\"commission-signature-box\"><span class=\"underline-placeholder underline-short\">&nbsp;</span></span><span class=\"commission-pii-box\">{memberName}</span></p>");
                 string piiSubLabel = memberName.Contains("underline-placeholder") ? "(прізвище та ініціали)" : "";
-                context.AppendLine($"        <p class=\"commission-sub-label-row\"><span class=\"commission-signature-box commission-sub-label\">(підпис)</span><span class=\"commission-pii-box commission-sub-label\">{piiSubLabel}</span></p>");
+                context.AppendLine($"      <p class=\"commission-sub-label-row\"><span class=\"commission-signature-box commission-sub-label\">(підпис)</span><span class=\"commission-pii-box commission-sub-label\">{piiSubLabel}</span></p>");
             }
             context.AppendLine("    </div>");
-
             context.AppendLine("    <div class=\"footer\">");
             context.AppendLine($"      <p>{EncHtml(GetText(data.City, "[Місто]"))} - {EncHtml(GetText(data.Year.ToString(), DateTime.Now.Year.ToString()))} рік</p>");
             context.AppendLine("    </div>");
-
             context.AppendLine("  </div>");
             context.AppendLine("</body>");
             context.AppendLine("</html>");
 
-            string filePath = $"{argument}.html";
-            try { await File.WriteAllTextAsync(filePath, context.ToString(), Encoding.UTF8); System.Diagnostics.Debug.WriteLine($"HTML file saved: {filePath}"); }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"ПОМИЛКА запису файлу {filePath}: {ex}"); throw; }
+            string filePath = $"{baseOutputNameWithDir}{this.FileExtension}"; 
+            try
+            {
+                await File.WriteAllTextAsync(filePath, context.ToString(), Encoding.UTF8);
+                Debug.WriteLine($"HTML file saved: {Path.GetFullPath(filePath)}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"ПОМИЛКА запису HTML файлу {filePath}: {ex}");
+                throw;
+            }
         }
     }
 }
