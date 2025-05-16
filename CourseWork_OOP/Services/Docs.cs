@@ -10,21 +10,126 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace CourseWork_OOP.Services 
+namespace CourseWork_OOP.Services
 {
     public class Docs : ITitlePageGenerator
     {
+        private const double NORMAL_FONT_SIZE = 14.0;
+        private const double SMALL_FONT_SIZE = 8;
+        private const string DEFAULT_FONT = "Times New Roman";
+
         public Docs() { }
 
-        private static string GetText(string? text, string defaultText = "") => text ?? defaultText;
-        private static string Indent(int spaces) => new string(' ', spaces);
+        private static string GetText(string? text, string defaultText = "") =>
+            string.IsNullOrWhiteSpace(text) ? defaultText : text;
 
-        public async Task GenerateAsync(TitlePageData data, string argument)
+        private int AddStyledParagraphSequential(
+            List<Request> requests,
+            int currentIndex,
+            string text,
+            string? alignment = null,
+            bool bold = false,
+            double? fontSize = null,
+            bool italic = false,
+            bool underline = false,
+            double? spaceBefore = null,
+            double? spaceAfter = null,
+            string? fontName = DEFAULT_FONT)
         {
-            string documentTitle = argument;
-            Debug.WriteLine($"Початок генерації Google Doc з назвою: {documentTitle}");
-            string documentId = null;
-            int insertionIndex = 1; 
+            string normalizedText = text ?? "";
+            normalizedText = normalizedText.Replace("\r\n", "\n").Replace("\r", "\n");
+
+            string textToInsert;
+            if (string.IsNullOrEmpty(normalizedText) && text != "\n")
+            {
+                textToInsert = "\n";
+            }
+            else if (text == "\n")
+            {
+                textToInsert = "\n";
+            }
+            else
+            {
+                textToInsert = normalizedText.EndsWith("\n") ? normalizedText : normalizedText + "\n";
+            }
+
+            int textLength = textToInsert.Length;
+            int textContentLength;
+
+            if (textToInsert == "\n")
+            {
+                textContentLength = 0;
+            }
+            else
+            {
+                textContentLength = textLength - 1;
+            }
+
+            Debug.WriteLine($"[Docs.AddStyledParagraphSequential] Index: {currentIndex}, OrigText: \"{text?.Replace("\r", "\\r").Replace("\n", "\\n")}\", NormText: \"{normalizedText.Replace("\n", "\\n")}\", ToInsert: \"{textToInsert.Replace("\n", "\\n")}\", textLength: {textLength}, textContentLength: {textContentLength}");
+
+            requests.Add(new Request
+            {
+                InsertText = new InsertTextRequest
+                {
+                    Text = textToInsert,
+                    Location = new Location { Index = currentIndex }
+                }
+            });
+
+            if (textContentLength > 0 || (textToInsert == "\n" && (bold || italic || underline || fontSize.HasValue)))
+            {
+                var textStyle = new TextStyle();
+                var textStyleFields = new List<string>();
+
+                textStyle.WeightedFontFamily = new WeightedFontFamily { FontFamily = fontName ?? DEFAULT_FONT };
+                textStyleFields.Add("weightedFontFamily");
+
+                textStyle.FontSize = new Dimension { Magnitude = fontSize ?? NORMAL_FONT_SIZE, Unit = "PT" };
+                textStyleFields.Add("fontSize");
+
+                if (bold) { textStyle.Bold = true; textStyleFields.Add("bold"); }
+                if (italic) { textStyle.Italic = true; textStyleFields.Add("italic"); }
+                if (underline) { textStyle.Underline = true; textStyleFields.Add("underline"); }
+
+                if (textStyleFields.Any())
+                {
+                    requests.Add(new Request
+                    {
+                        UpdateTextStyle = new UpdateTextStyleRequest
+                        {
+                            Range = new Google.Apis.Docs.v1.Data.Range { StartIndex = currentIndex, EndIndex = currentIndex + (textContentLength > 0 ? textContentLength : 1) },
+                            TextStyle = textStyle,
+                            Fields = string.Join(",", textStyleFields.Distinct())
+                        }
+                    });
+                }
+            }
+
+            var paragraphStyle = new ParagraphStyle();
+            var paragraphStyleFields = new List<string>();
+            if (alignment != null) { paragraphStyle.Alignment = alignment.ToUpperInvariant(); paragraphStyleFields.Add("alignment"); }
+            if (spaceBefore.HasValue) { paragraphStyle.SpaceAbove = new Dimension { Magnitude = spaceBefore.Value, Unit = "PT" }; paragraphStyleFields.Add("spaceAbove"); }
+            if (spaceAfter.HasValue) { paragraphStyle.SpaceBelow = new Dimension { Magnitude = spaceAfter.Value, Unit = "PT" }; paragraphStyleFields.Add("spaceBelow"); }
+
+            if (paragraphStyleFields.Any())
+            {
+                requests.Add(new Request
+                {
+                    UpdateParagraphStyle = new UpdateParagraphStyleRequest
+                    {
+                        Range = new Google.Apis.Docs.v1.Data.Range { StartIndex = currentIndex, EndIndex = currentIndex + textLength },
+                        ParagraphStyle = paragraphStyle,
+                        Fields = string.Join(",", paragraphStyleFields.Distinct())
+                    }
+                });
+            }
+            return currentIndex + textLength;
+        }
+
+        public async Task GenerateAsync(TitlePageData data, string documentTitle)
+        {
+            Debug.WriteLine($"[Docs.GenerateAsync] Початок генерації Google Doc з назвою: \"{documentTitle}\"");
+            string? documentId = null;
 
             try
             {
@@ -36,90 +141,123 @@ namespace CourseWork_OOP.Services
                 });
 
                 var document = new Document { Title = documentTitle };
+                Debug.WriteLine($"[Docs.GenerateAsync] Створення документа Google з назвою: \"{document.Title}\"");
                 var createdDocument = await docsService.Documents.Create(document).ExecuteAsync();
                 documentId = createdDocument.DocumentId;
-                Debug.WriteLine($"Google Doc створено! ID: {documentId}");
+                Debug.WriteLine($"[Docs.GenerateAsync] Google Doc успішно створено! ID: {documentId}.");
 
                 List<Request> requests = new List<Request>();
+                int currentIndex = 1;
 
-                Action<string, string, bool, bool> AddFormattedInsert = (text, alignment, isBold, isItalic) => {
-                    string currentText = string.IsNullOrEmpty(text) ? "\n" : text;
+                currentIndex = AddStyledParagraphSequential(requests, currentIndex, "Міністерство освіти і науки України", alignment: "CENTER", fontSize: NORMAL_FONT_SIZE);
+                currentIndex = AddStyledParagraphSequential(requests, currentIndex, GetText(data.University, "НАЗВА УНІВЕРСИТЕТУ"), alignment: "CENTER", fontSize: NORMAL_FONT_SIZE);
+                currentIndex = AddStyledParagraphSequential(requests, currentIndex, $"Факультет {GetText(data.Faculty, "Факультет не вказано")}", alignment: "CENTER", fontSize: NORMAL_FONT_SIZE);
+                currentIndex = AddStyledParagraphSequential(requests, currentIndex, $"Кафедра {GetText(data.Department, "Кафедру не вказано")}", alignment: "CENTER", fontSize: NORMAL_FONT_SIZE, spaceAfter: 25);
+                currentIndex = AddStyledParagraphSequential(requests, currentIndex, "КУРСОВА РОБОТА З ДИСЦИПЛІНИ", alignment: "CENTER", fontSize: NORMAL_FONT_SIZE);
+                currentIndex = AddStyledParagraphSequential(requests, currentIndex, $"«{GetText(data.Discipline, "НАЗВА ДИСЦИПЛІНИ").ToUpperInvariant()}»", alignment: "CENTER", fontSize: NORMAL_FONT_SIZE);
+                currentIndex = AddStyledParagraphSequential(requests, currentIndex, $"на тему: «{GetText(data.Topic, "Тема не вказана").ToUpperInvariant()}»", alignment: "CENTER", fontSize: NORMAL_FONT_SIZE, spaceAfter: 50);
+                string studentLabel = (GetText(data.Sex) == "Жін") ? "Студентки" : "Студента";
+                currentIndex = AddStyledParagraphSequential(requests, currentIndex, $"{studentLabel} {GetText(data.CourseNumber, "X")} курсу, групи {GetText(data.Group, "XXXX")}", alignment: "END", fontSize: NORMAL_FONT_SIZE);
+                currentIndex = AddStyledParagraphSequential(requests, currentIndex, GetText(data.SpecialtyName, "Спеціальність не вказана"), alignment: "END", fontSize: NORMAL_FONT_SIZE);
+                currentIndex = AddStyledParagraphSequential(requests, currentIndex, GetText(data.StudentsFullName, "ПІБ Студента"), alignment: "END", fontSize: NORMAL_FONT_SIZE, spaceAfter: 18);
+                currentIndex = AddStyledParagraphSequential(requests, currentIndex, $"Керівник: {GetText(data.SuperVisorPosition, "Посада керівника")}, {GetText(data.SuperVisorFullName, "ПІБ Керівника")}", alignment: "END", fontSize: NORMAL_FONT_SIZE);
+                currentIndex = AddStyledParagraphSequential(requests, currentIndex, "\t(посада, вчене звання, науковий ступінь, прізвище та ініціали)", alignment: "END", fontSize: SMALL_FONT_SIZE, spaceAfter: 30);
+                currentIndex = AddStyledParagraphSequential(requests, currentIndex, "Оцінка за шкалою: " + new string('_', 22), alignment: "END", fontSize: NORMAL_FONT_SIZE);
+                currentIndex = AddStyledParagraphSequential(requests, currentIndex, "(національною, кількість балів, ECTS)"+"  ", alignment: "END", fontSize: SMALL_FONT_SIZE, spaceAfter: 30);
 
-                    requests.Add(new Request { InsertText = new InsertTextRequest { Text = currentText, Location = new Location { Index = insertionIndex } } });
+                currentIndex = AddStyledParagraphSequential(requests, currentIndex, "Члени комісії:",
+                    alignment: "START", 
+                    fontSize: NORMAL_FONT_SIZE,
+                    spaceAfter: 8);
 
-                    if (!(currentText == "\n" && string.IsNullOrWhiteSpace(text))) 
-                    {
-                        requests.Add(new Request
-                        {
-                            UpdateParagraphStyle = new UpdateParagraphStyleRequest
-                            {
-                                Range = new Google.Apis.Docs.v1.Data.Range { StartIndex = insertionIndex, EndIndex = insertionIndex + 1 },
-                                ParagraphStyle = new ParagraphStyle { Alignment = alignment },
-                                Fields = "alignment"
-                            }
-                        });
-                        requests.Add(new Request
-                        {
-                            UpdateTextStyle = new UpdateTextStyleRequest
-                            {
-                                Range = new Google.Apis.Docs.v1.Data.Range { StartIndex = insertionIndex, EndIndex = insertionIndex + 1 },
-                                TextStyle = new TextStyle { Bold = isBold, Italic = isItalic }, 
-                                Fields = "bold,italic"
-                            } 
-                        });
-                    }
-                };
+                string fixedSignatureLine = new string('_', 25);    
+                string piiPlaceholderLine = new string('_', 25);    
+                string signatureLabelText = "\t\t\t\t\t\t(підпис)";
+                string tabsToShiftPii = "\t\t\t\t"; 
 
-                AddFormattedInsert($"{GetText(data.City)} – {data.Year} рік\n", "CENTER", false, false);
-                AddFormattedInsert("\n\n", "START", false, false);
-
-                string sigPlaceholderUser = "______________"; string piiPlaceholderUser = "________________________"; string spacingUser = "       ";
-                string subSigUser = "(підпис)"; string subPiiUser = "(прізвище та ініціали)";
-                string commissionRowUser1 = $"{sigPlaceholderUser}{spacingUser}{piiPlaceholderUser}\n";
-                string commissionRowUser2 = $"{Indent(15)}{subSigUser}{spacingUser}{Indent(6)}{subPiiUser}\n";
-                for (int i = 0; i < 3; i++) { AddFormattedInsert(commissionRowUser2, "START", false, true); AddFormattedInsert(commissionRowUser1, "START", false, false); if (i < 2) AddFormattedInsert("\n", "START", false, false); }
-                AddFormattedInsert("Члени комісії:\n", "START", false, false);
-                AddFormattedInsert("\n", "START", false, false);
-
-                AddFormattedInsert("(національною, кількість балів, ECTS)\n", "START", false, true);
-                AddFormattedInsert("_________________________________\n", "START", false, false);
-                AddFormattedInsert("Оцінка за шкалою:\n", "START", false, false);
-                AddFormattedInsert("\n", "START", false, false);
-
-                AddFormattedInsert("(посада, вчене звання, науковий ступінь, прізвище та ініціали)\n", "START", false, true);
-                AddFormattedInsert($"Керівник: {GetText(data.SuperVisorPosition)}, {GetText(data.SuperVisorFullName)}\n", "START", false, false);
-                AddFormattedInsert("\n\n", "START", false, false);
-
-                AddFormattedInsert("(прізвище та ініціали)\n", "START", false, true);
-                AddFormattedInsert($"{GetText(data.StudentsFullName)}\n", "START", false, false);
-                AddFormattedInsert("\n", "START", false, false);
-                AddFormattedInsert($"{GetText(data.SpecialtyName, "спеціальності 121 «Інженерія програмного забезпечення»")}\n", "START", false, false);
-                string studentLabel = (data.Sex == "Жін") ? "Студентки" : "Студента";
-                AddFormattedInsert($"{studentLabel} {GetText(data.CourseNumber, "2")} курсу, групи {GetText(data.Group)}\n", "START", false, false);
-                AddFormattedInsert("\n\n\n", "START", false, false);
-
-                string workTypeUser = "КУРСОВА РОБОТА"; if ((data.Discipline ?? "").ToLower().Contains("програмування")) workTypeUser = "КУРСОВА РОБОТА З ОБ’ЄКТНО-ОРІЄНТОВАНОГО ПРОГРАМУВАННЯ";
-                AddFormattedInsert($"на тему «{GetText(data.Topic)}»\n", "CENTER", false, true);
-                AddFormattedInsert($"{workTypeUser}\n", "CENTER", true, false);
-                AddFormattedInsert("\n\n\n\n\n\n\n", "CENTER", false, false);
-
-                AddFormattedInsert($"Кафедра {GetText(data.Department)}\n", "CENTER", false, false);
-                AddFormattedInsert($"Факультет {GetText(data.Faculty)}\n", "CENTER", false, false);
-                AddFormattedInsert($"{GetText(data.University)}\n", "CENTER", true, false);
-                AddFormattedInsert("Міністерство освіти і науки України\n", "CENTER", false, false);
-                AddFormattedInsert("\n\n\n", "CENTER", false, false);
-
-
-                if (requests.Count > 0)
+                for (int i = 0; i < 3; i++)
                 {
-                    requests.Reverse();
+                    string piiFieldText; 
+                    if (data.CommissionMemberNames != null && i < data.CommissionMemberNames.Count && !string.IsNullOrWhiteSpace(data.CommissionMemberNames[i]))
+                    {
+                        piiFieldText = GetText(data.CommissionMemberNames[i]);
+                    }
+                    else
+                    {
+                        piiFieldText = piiPlaceholderLine; 
+                    }
+
+                    string line1Text = $"{tabsToShiftPii}{fixedSignatureLine}{"   "}{piiFieldText}";
+                    currentIndex = AddStyledParagraphSequential(requests, currentIndex, line1Text,
+                        alignment: "START", 
+                        fontSize: NORMAL_FONT_SIZE,
+                        spaceAfter: 1); 
+
+                    int labelIndentSpaces = 0;
+                    if (fixedSignatureLine.Length > signatureLabelText.Length)
+                    {
+                        labelIndentSpaces = (fixedSignatureLine.Length - signatureLabelText.Length) / 2;
+                    }
+                    if (labelIndentSpaces < 0) labelIndentSpaces = 0;
+
+                    string labelLineText = $"{new string(' ', labelIndentSpaces)}{signatureLabelText}";
+
+                    currentIndex = AddStyledParagraphSequential(requests, currentIndex, labelLineText,
+                        alignment: "START", 
+                        fontSize: SMALL_FONT_SIZE,
+                        spaceAfter: (i < 2) ? 10.0 : 4.0);
+                }
+
+                currentIndex = AddStyledParagraphSequential(requests, currentIndex, "", spaceBefore: 60);
+                currentIndex = AddStyledParagraphSequential(requests, currentIndex, GetText(data.City, "Місто") + " – " + GetText(data.Year.ToString(), DateTime.Now.Year.ToString()) + " рік", alignment: "CENTER", fontSize: NORMAL_FONT_SIZE);
+                currentIndex = AddStyledParagraphSequential(requests, currentIndex, "", spaceAfter: 20);
+
+                Debug.WriteLine($"[Docs.GenerateAsync] Кількість сформованих запитів: {requests.Count}");
+
+                if (requests.Any())
+                {
                     BatchUpdateDocumentRequest batchUpdateRequest = new BatchUpdateDocumentRequest { Requests = requests };
-                    Debug.WriteLine($"Надсилаємо {requests.Count} запитів BatchUpdate для document ID: {documentId}");
-                    await docsService.Documents.BatchUpdate(batchUpdateRequest, documentId).ExecuteAsync();
-                    Debug.WriteLine($"Документ Google Doc ID: {documentId} оновлено.");
+                    Debug.WriteLine($"[Docs.GenerateAsync] Надсилаємо BatchUpdate з {requests.Count} запитами для document ID: {documentId}");
+
+                    Google.Apis.Docs.v1.Data.BatchUpdateDocumentResponse? response = null;
+                    try
+                    {
+                        response = await docsService.Documents.BatchUpdate(batchUpdateRequest, documentId).ExecuteAsync();
+                        Debug.WriteLine($"[Docs.GenerateAsync] BatchUpdate виконано (або не викликало винятку). Document ID: {documentId}.");
+                        if (response != null)
+                        {
+                            Debug.WriteLine($"[Docs.GenerateAsync] Відповідь BatchUpdate: DocumentId='{response.DocumentId}', WriteControl={response.WriteControl != null}, Replies.Count={response.Replies?.Count ?? 0}");
+                        }
+                    }
+                    catch (Google.GoogleApiException apiEx)
+                    {
+                        Debug.WriteLine($"[Docs.GenerateAsync] GoogleApiException під час BatchUpdate для ID {documentId}: {apiEx.Message}");
+                        Debug.WriteLine($"[Docs.GenerateAsync] Повний текст помилки GoogleApiException: {apiEx.ToString()}");
+                        if (apiEx.Error != null)
+                        {
+                            Debug.WriteLine($"[Docs.GenerateAsync] Помилка сервісу: {apiEx.Error.Message}, Код: {apiEx.Error.Code}");
+                            if (apiEx.Error.Errors != null)
+                            {
+                                foreach (var errDetail in apiEx.Error.Errors)
+                                {
+                                    Debug.WriteLine($"  - Деталь помилки: Domain={errDetail.Domain}, Reason={errDetail.Reason}, Message={errDetail.Message}");
+                                }
+                            }
+                        }
+                        throw;
+                    }
+                    Debug.WriteLine($"[Docs.GenerateAsync] Запит на оновлення документа {documentId} надіслано.");
+                }
+                else
+                {
+                    Debug.WriteLine("[Docs.GenerateAsync] Список запитів порожній. Оновлення не буде надіслано. Документ залишиться порожнім, якщо він щойно створений.");
                 }
             }
-            catch (Exception ex) { Debug.WriteLine($"Помилка при генерації Google Doc: {ex.ToString()}"); throw; }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[Docs.GenerateAsync] Загальна помилка при генерації Google Doc (назва: \"{documentTitle}\"), ID документа (якщо створено): {documentId}. Помилка: {ex.ToString()}");
+                throw;
+            }
         }
     }
 }
