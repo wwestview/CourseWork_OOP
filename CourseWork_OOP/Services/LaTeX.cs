@@ -1,103 +1,143 @@
 ﻿using CourseWork_OOP.Interfaces;
-using CourseWork_OOP.Services;
+using CourseWork_OOP.Services; 
 using System;
 using System.IO;
+using System.Linq; 
 using System.Text;
 using System.Threading.Tasks;
 
 namespace CourseWork_OOP.Services
 {
-    public class LaTeX : ITitlePageGenerator
+    public class LaTeX : ITitlePageGenerator 
     {
+
         public LaTeX() { }
 
         private string EscapeLatex(string? text)
         {
             if (string.IsNullOrEmpty(text)) return string.Empty;
             return text.Replace(@"\", @"\textbackslash{}").Replace("{", @"\{").Replace("}", @"\}")
-                      .Replace("&", @"\&").Replace("%", @"\%").Replace("$", @"\$")
-                      .Replace("#", @"\#").Replace("_", @"\_").Replace("^", @"\textasciicircum{}")
-                      .Replace("~", @"\textasciitilde{}");
+                       .Replace("&", @"\&").Replace("%", @"\%").Replace("$", @"\$")
+                       .Replace("#", @"\#").Replace("_", @"\_").Replace("^", @"\textasciicircum{}")
+                       .Replace("~", @"\textasciitilde{}")
+                       .Replace(" - ", @" -- ")
+                       .Replace("–", @"--")
+                       .Replace("—", @"---");
         }
 
-        private string GetText(string? text, string defaultText = "") => text ?? defaultText;
+        private string GetText(string? text, string defaultPlaceholder = "") =>
+            string.IsNullOrWhiteSpace(text) ? defaultPlaceholder : text;
 
-        public async Task GenerateAsync(TitlePageData data, string argument)
+        public async Task GenerateAsync(TitlePageData data, string argument) 
         {
             var sb = new StringBuilder();
 
-            sb.AppendLine(@"\documentclass[12pt,a4paper]{article}");
+            sb.AppendLine(@"\documentclass[a4paper,12pt]{article}");
             sb.AppendLine(@"\usepackage[utf8]{inputenc}");
             sb.AppendLine(@"\usepackage[ukrainian]{babel}");
+            sb.AppendLine(@"\usepackage{mathptmx}"); 
             sb.AppendLine(@"\usepackage{graphicx}");
             sb.AppendLine(@"\usepackage{geometry}");
             sb.AppendLine(@"\usepackage{setspace}");
-            sb.AppendLine(@"\usepackage{titlesec}");
-            sb.AppendLine(@"\usepackage{parskip}");
-            sb.AppendLine(@"\usepackage{fancyhdr}");
-            sb.AppendLine(@"\geometry{top=2cm, bottom=2cm, left=3cm, right=1.5cm}");
+            sb.AppendLine(@"\usepackage{parskip}"); 
+            sb.AppendLine(@"\usepackage{ulem}");    
+            sb.AppendLine(@"\geometry{");
+            sb.AppendLine(@"  left=3cm,");
+            sb.AppendLine(@"  right=1.5cm,");
+            sb.AppendLine(@"  top=2cm,");
+            sb.AppendLine(@"  bottom=2cm");
+            sb.AppendLine(@"}");
             sb.AppendLine(@"\pagestyle{empty}");
             sb.AppendLine(@"\setlength{\parindent}{0pt}");
-            sb.AppendLine(@"\renewcommand{\baselinestretch}{1}");
+            sb.AppendLine(@"\linespread{1.2}"); 
 
             sb.AppendLine(@"\begin{document}");
             sb.AppendLine(@"\thispagestyle{empty}");
 
             sb.AppendLine(@"\begin{center}");
-            sb.AppendLine(@"Міністерство освіти і науки України\\");
-            sb.AppendLine($@"\textbf{{{EscapeLatex(GetText(data.University))}}}");
+            sb.AppendLine(@"Міністерство освіти і науки України \\[4pt]");
+            sb.AppendLine($@"{{{EscapeLatex(GetText(data.University, "НАЗВА УНІВЕРСИТЕТУ"))}}}");
             sb.AppendLine(@"\end{center}");
-            sb.AppendLine(@"\vspace{1cm}");
-            sb.AppendLine($@"Факультет {EscapeLatex(GetText(data.Faculty))}\\");
-            sb.AppendLine($@"Кафедра {EscapeLatex(GetText(data.Department))}\\");
-            sb.AppendLine(@"\vspace{1cm}");
 
-            string workType = "КУРСОВА РОБОТА";
-            if ((data.Discipline ?? "").ToLower().Contains("програмування"))
-                workType = "КУРСОВА РОБОТА З ОБ’ЄКТНО-ОРІЄНТОВАНОГО ПРОГРАМУВАННЯ";
+            sb.AppendLine(@"\vspace{0.8cm}");
 
             sb.AppendLine(@"\begin{center}");
-            sb.AppendLine($@"\textbf{{\Large {EscapeLatex(workType)}}}\\[0.5cm]");
-            sb.AppendLine($@"на тему «\textbf{{{EscapeLatex(GetText(data.Topic))}}}»");
+            sb.AppendLine($@"Факультет {EscapeLatex(GetText(data.Faculty, "Факультет не вказано"))} \\");
+            sb.AppendLine($@"Кафедра {EscapeLatex(GetText(data.Department, "Кафедру не вказано"))}");
             sb.AppendLine(@"\end{center}");
-            sb.AppendLine(@"\vspace{1.0cm}");
+
+            sb.AppendLine(@"\vspace{1.2cm}");
+
+            sb.AppendLine(@"\begin{center}");
+            sb.AppendLine(@"\large \textbf{КУРСОВА РОБОТА З ДИСЦИПЛІНИ} \\");
+            sb.AppendLine($@"\large \textbf{{«{EscapeLatex(GetText(data.Discipline, "НАЗВА ДИСЦИПЛІНИ").ToUpperInvariant())}»}} \\[4pt]");
+            sb.AppendLine($@"\normalsize на тему «\textbf{{{EscapeLatex(GetText(data.Topic, "Тема не вказана"))}}}»");
+            sb.AppendLine(@"\end{center}");
+
+            sb.AppendLine(@"\vspace{1.3cm}");
 
             sb.AppendLine(@"\begin{flushright}");
-            string studentLabel = (data.Sex == "Жін") ? "Студентки" : "Студента";
-            sb.AppendLine($@"{studentLabel} {EscapeLatex(GetText(data.CourseNumber, "2"))} курсу, групи {EscapeLatex(GetText(data.Group))}\\");
-            sb.AppendLine($@"{EscapeLatex(GetText(data.SpecialtyName, "спеціальності 121 «Інженерія програмного забезпечення»"))}\\[1em]");
-            sb.AppendLine($@"\textbf{{{EscapeLatex(GetText(data.StudentsFullName))}}}\\[1cm]");
-            sb.AppendLine($@"Керівник:\hspace{{1em}}{EscapeLatex(GetText(data.SuperVisorPosition))}, \hspace{{0.5em}}{EscapeLatex(GetText(data.SuperVisorFullName))}\\");
+            string studentLabel = (GetText(data.Sex) == "Жін") ? "Студентки" : "Студента";
+            sb.AppendLine($@"{studentLabel} {EscapeLatex(GetText(data.CourseNumber, "X"))} курсу, групи {EscapeLatex(GetText(data.Group, "XXXX"))} \\");
+            sb.AppendLine($@"{EscapeLatex(GetText(data.SpecialtyName, "Спеціальність не вказана"))} \\");
+            sb.AppendLine($@"\textbf{{{EscapeLatex(GetText(data.StudentsFullName, "ПІБ Студента"))}}} \\[1cm]");
+            sb.AppendLine($@"Керівник:\hspace{{0.5em}}{EscapeLatex(GetText(data.SuperVisorPosition, "Посада керівника"))} , {EscapeLatex(GetText(data.SuperVisorFullName, "ПІБ Керівника"))} \\");
+            sb.AppendLine(@"\footnotesize (посада, вчене звання, науковий ступінь, прізвище та ініціали)");
             sb.AppendLine(@"\end{flushright}");
+
             sb.AppendLine(@"\vspace{1cm}");
 
             sb.AppendLine(@"\begin{flushright}");
-            sb.AppendLine(@"Оцінка за шкалою: \underline{\hspace{6cm}}");
+            sb.AppendLine(@"Оцінка за шкалою:\hspace{0.5em}\uline{\hspace{5.5cm}} \\");
+            sb.AppendLine(@"\footnotesize (національною, кількість балів, ECTS)");
             sb.AppendLine(@"\end{flushright}");
-            sb.AppendLine(@"\vspace{1cm}");
 
-            sb.AppendLine(@"\begin{flushright}");
-            sb.AppendLine(@"\textbf{Члени комісії:}\\[0.3cm]");
-            for (int i = 0; i < 3; i++)
+            sb.AppendLine(@"\vspace{0.9cm}");
+
+            if (data.CommissionMemberNames != null && data.CommissionMemberNames.Any())
             {
-                string memberName = (i < data.CommissionMemberNames?.Count && !string.IsNullOrWhiteSpace(data.CommissionMemberNames[i]))
-                                    ? EscapeLatex(GetText(data.CommissionMemberNames[i]))
-                                    : @"\makebox[6cm]{\hrulefill}";
-                sb.AppendLine(@"\noindent" + @"\makebox[4cm]{\hrulefill}" + @"\hspace{1cm}" + memberName + @"\\");
-                sb.AppendLine(@"\smallskip");
-                sb.AppendLine(@"\hspace*{1.0cm}\makebox[4cm][c]{(підпис)}\hspace*{1.0cm}\makebox[6cm][c]{(прізвище та ініціали)}\\[0.5cm]");
+                sb.AppendLine(@"\begin{flushright}");
+                sb.AppendLine(@"\begin{tabular}{l@{}l@{\hspace{0.4cm}}l@{}}");
+                sb.AppendLine(@"  && \\");
+                sb.AppendLine(@"  && \\");
+
+                string signatureLine = @"\makebox[3.5cm]{\hrulefill}";
+                string signatureLabel = @"\makebox[3.5cm][c]{\footnotesize(підпис)}";
+
+
+                for (int i = 0; i < 3; i++)
+                {
+                    string commissionLabel = (i == 0) ? @"\textbf{Члени комісії:} \hspace{0.4cm}" : "";
+                    string memberPii = EscapeLatex(GetText(data.CommissionMemberNames[i], @"\phantom{ПІБ Члена Комісії}"));
+
+                    sb.Append($@"  {commissionLabel}&{signatureLine} & {memberPii} \\");
+                    sb.Append($@"  &{signatureLabel} & ");
+                    sb.AppendLine((i < 3 - 1) ? @"\\[0.8em]" : ""); 
+                }
+                sb.AppendLine(@"\end{tabular}");
+                sb.AppendLine(@"\end{flushright}");
             }
-            sb.AppendLine(@"\end{flushright}");
+
             sb.AppendLine(@"\vfill");
 
             sb.AppendLine(@"\begin{center}");
-            sb.AppendLine($@"{EscapeLatex(GetText(data.City))} – {data.Year} рік");
+            sb.AppendLine($@"{EscapeLatex(GetText(data.City))} – {EscapeLatex(GetText(data.Year.ToString()))} рік");
             sb.AppendLine(@"\end{center}");
+
             sb.AppendLine(@"\end{document}");
 
-            string filePath = $"{argument}.tex";
-            try { await File.WriteAllTextAsync(filePath, sb.ToString(), new UTF8Encoding(false)); System.Diagnostics.Debug.WriteLine($"LaTeX saved: {filePath}"); }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"ERROR LaTeX save: {ex}"); throw; }
+            string filePath = $"{argument}.tex"; 
+            try
+            {
+                var utf8NoBom = new UTF8Encoding(false);
+                await File.WriteAllTextAsync(filePath, sb.ToString(), utf8NoBom);
+                System.Diagnostics.Debug.WriteLine($"LaTeX file saved: {filePath}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ПОМИЛКА запису LaTeX файлу {filePath}: {ex}");
+                throw;
+            }
         }
     }
 }

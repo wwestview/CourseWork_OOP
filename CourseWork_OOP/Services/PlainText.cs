@@ -61,10 +61,9 @@ namespace CourseWork_OOP.Services
             context.AppendLine();
 
             string sigLine = "______________"; string piiLinePlaceholder = "________________________"; string spacing = "       ";
-            string subSig = "(підпис)"; string subPii = "(прізвище та ініціали)";
-            int subSigPad = (sigLine.Length - subSig.Length) / 2; int subPiiPad = (piiLinePlaceholder.Length - subPii.Length) / 2;
+            string subSig = "(підпис)"; 
+            int subSigPad = (sigLine.Length - subSig.Length) / 2; 
             string subSigLine = new string(' ', Math.Max(0, subSigPad)) + subSig;
-            string subPiiLine = new string(' ', Math.Max(0, subPiiPad)) + subPii;
 
             for (int i = 0; i < 3; i++)
             {
@@ -72,7 +71,7 @@ namespace CourseWork_OOP.Services
                                     ? GetText(data.CommissionMemberNames[i]).PadRight(piiLinePlaceholder.Length)
                                     : piiLinePlaceholder;
                 context.AppendLine(commissionIndent + $"{sigLine}{spacing}{memberName.Substring(0, Math.Min(memberName.Length, piiLinePlaceholder.Length))}");
-                context.AppendLine(commissionIndent + $"{subSigLine}{spacing}{subPiiLine}");
+                context.AppendLine(commissionIndent + $"{subSigLine}{spacing}");
                 if (i < 2) context.AppendLine();
             }
 

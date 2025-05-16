@@ -168,7 +168,6 @@ namespace CourseWork_OOP
                 StatusMessage = finalMessage;
             }
             catch (Exception ex) { StatusMessage = $"Критична помилка: {ex.Message}"; Debug.WriteLine($"Критична помилка: {ex.ToString()}"); }
-            // IsBusy видалено
         }
     }
 }
