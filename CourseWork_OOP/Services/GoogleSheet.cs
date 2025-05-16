@@ -51,7 +51,7 @@ namespace CourseWork_OOP.Services
                 if (values != null && values.Count > 0)
                 {
                     Debug.WriteLine($"Отримано {values.Count} рядків даних.");
-                    int currentSheetRowNumber = 5;
+                    int currentSheetRowNumber = 5; 
 
                     foreach (var row in values)
                     {
@@ -62,7 +62,6 @@ namespace CourseWork_OOP.Services
                             continue;
                         }
 
-                        // B=0, C=1, D=2, E=3, F=4
                         const int expectedCoreColumnCount = 5;
 
                         if (row.Count < expectedCoreColumnCount)
@@ -90,9 +89,15 @@ namespace CourseWork_OOP.Services
                                                             .Select(s => s.Trim())
                                                             .Take(3)
                                                             .ToList() ?? new List<string>()
-                                                      : new List<string>(),
-
+                                                      : new List<string>(), 
                             };
+
+                            studentData.University = studentData.University ?? "Черкаський національний університет імені Богдана Хмельницького";
+                            studentData.Faculty = studentData.Faculty ?? "обчислювальної техніки інтелектуальних та управляючих систем";
+                            studentData.Department = studentData.Department ?? "програмного забезпечення автоматизованих систем";
+                            studentData.Discipline = studentData.Discipline ?? "ОБ’ЄКТНО-ОРІЄНТОВАНОГО ПРОГРАМУВАННЯ";
+                            studentData.CourseNumber = studentData.CourseNumber ?? "2";
+                            studentData.SpecialtyName = studentData.SpecialtyName ?? "спеціальності 121 «Інженерія програмного забезпечення»";
 
 
                             if (!string.IsNullOrWhiteSpace(studentData.StudentsFullName))
