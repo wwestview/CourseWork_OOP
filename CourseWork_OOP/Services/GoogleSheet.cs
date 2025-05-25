@@ -75,11 +75,11 @@ namespace CourseWork_OOP.Services
                         {
                             var studentData = new TitlePageData
                             {
-                                SuperVisorFullName = GetRowValue(row, 0), // Стовпець B
-                                Topic = GetRowValue(row, 1), // Стовпець C
-                                StudentsFullName = GetRowValue(row, 2), // Стовпець D
-                                Group = GetRowValue(row, 3), // Стовпець E
-                                SuperVisorPosition = GetRowValue(row, 4), // Стовпець F
+                                SuperVisorFullName = GetRowValue(row, 0), 
+                                Topic = GetRowValue(row, 1), 
+                                StudentsFullName = GetRowValue(row, 2), 
+                                Group = GetRowValue(row, 3), 
+                                SuperVisorPosition = GetRowValue(row, 4), 
 
                                 Sex = GetRowValue(row, 5, "Чол"),
 

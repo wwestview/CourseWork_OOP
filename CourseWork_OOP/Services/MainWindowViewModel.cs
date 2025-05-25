@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CourseWork_OOP.Interfaces;
+using CourseWork_OOP.Interfaces; 
 using CourseWork_OOP.Services;
 using System;
 using System.Collections.Generic;
@@ -41,6 +41,7 @@ namespace CourseWork_OOP
         [ObservableProperty] private bool isPlainTextSelected = true;
         [ObservableProperty] private bool isDocsSelected = true;
         [ObservableProperty] private string statusMessage = "Готово";
+
 
         public MainWindowViewModel(IEnumerable<ITitlePageGenerator> generators)
         {
@@ -91,16 +92,14 @@ namespace CourseWork_OOP
                     StatusMessage = "Читання даних з Google Sheets...";
                     if (string.IsNullOrWhiteSpace(SpreadsheetId) || string.IsNullOrWhiteSpace(SheetRange)) { StatusMessage = "Не вказано ID таблиці або діапазон."; MessageBox.Show("Будь ласка, вкажіть ID таблиці та діапазон для читання.", "Налаштування Google Sheets"); return; }
                     dataToProcess = await GoogleSheet.ReadSheetAsync(this.SpreadsheetId, this.SheetRange);
-                    if (dataToProcess == null || !dataToProcess.Any()) { StatusMessage = "Дані студентів не знайдено у таблиці або сталася помилка."; return; } 
+                    if (dataToProcess == null || !dataToProcess.Any()) { StatusMessage = "Дані студентів не знайдено у таблиці або сталася помилка."; return; }
                     foreach (var dataItem in dataToProcess)
                     {
                         dataItem.Sex ??= currentSex; dataItem.CourseNumber ??= this.CourseNumber; dataItem.SpecialtyName ??= this.SpecialtyName;
                         dataItem.University ??= this.University; dataItem.Faculty ??= this.Faculty; dataItem.Department ??= this.Department;
                         dataItem.Discipline ??= this.Discipline; dataItem.City ??= this.City; dataItem.Year = this.Year;
                         if (dataItem.CommissionMemberNames == null || !dataItem.CommissionMemberNames.Any())
-                        {
-                            dataItem.CommissionMemberNames = new List<string> { "Онищенко Б.О", "Порубльов І.М", "Гребенович Ю.Є" };
-                        }
+                        { dataItem.CommissionMemberNames = new List<string> { "Онищенко Б.О", "Порубльов І.М", "Гребенович Ю.Є" }; }
                     }
                 }
                 else { StatusMessage = "Джерело даних не вибрано."; return; }
@@ -130,8 +129,8 @@ namespace CourseWork_OOP
 
                     foreach (var generator in selectedGenerators)
                     {
-                        string formatName = ((BaseTitlePageGenerator)generator).FormatName;
-                        string fileExtension = ((BaseTitlePageGenerator)generator).FileExtension;
+                        var baseGen = (BaseTitlePageGenerator)generator; 
+                        string formatName = baseGen.FormatName;
 
                         string safeStudentNamePart = string.Join("_", currentStudentData.StudentsFullName?.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries) ?? new string[] { "UnknownStudent" });
                         if (string.IsNullOrWhiteSpace(safeStudentNamePart)) safeStudentNamePart = "UnknownStudent";
@@ -139,9 +138,9 @@ namespace CourseWork_OOP
                         string baseFileNameComponent = $"Титулка_{safeStudentNamePart}_{formatName.Replace(" ", "_")}_{DateTime.Now:yyyyMMddHHmmss}";
 
                         string argumentForGenerateAsync;
-                        if (generator is Docs) 
+                        if (generator is Docs)
                         {
-                            argumentForGenerateAsync = baseFileNameComponent; 
+                            argumentForGenerateAsync = baseFileNameComponent;
                         }
                         else
                         {
@@ -165,7 +164,7 @@ namespace CourseWork_OOP
                 finalMessage += (totalErrors.Count == 0) ? $"Успішно згенеровано {generatedFileCount} файлів/документів." : $"Успішно: {generatedFileCount}. Помилок: {totalErrors.Count}.";
                 if (totalErrors.Any())
                 {
-                    finalMessage += "\nДеталі помилок див. у Debug Output або у вікні з помилками."; // Додано
+                    finalMessage += "\nДеталі помилок див. у Debug Output або у вікні з помилками.";
                     MessageBox.Show("Під час генерації виникли помилки:\n" + string.Join("\n", totalErrors.Take(5)) + (totalErrors.Count > 5 ? "\n...та інші." : ""), "Помилки генерації", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
                 StatusMessage = finalMessage;
