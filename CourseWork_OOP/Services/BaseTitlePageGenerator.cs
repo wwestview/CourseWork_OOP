@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 
 namespace CourseWork_OOP.Services
 {
-    // Делегат для синхронних кроків побудови
     public delegate void BuildStepDelegate(TitlePageData data);
 
     public abstract class BaseTitlePageGenerator : ITitlePageGenerator

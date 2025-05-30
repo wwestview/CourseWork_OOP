@@ -19,7 +19,7 @@ namespace CourseWork_OOP
         [ObservableProperty] private string university = "Черкаський національний університет імені Богдана Хмельницького";
         [ObservableProperty] private string faculty = "обчислювальної техніки, інтелектуальних та управляючих систем";
         [ObservableProperty] private string department = "програмного забезпечення автоматизованих систем\r\n\r\n";
-        [ObservableProperty] private string discipline = "ОБ'ЄКТО-ОРІЄНТОВАНОГО ПРОГРАМУВАННЯ";
+        [ObservableProperty] private string discipline = "ОБ'ЄКТНО-ОРІЄНТОВАНОГО ПРОГРАМУВАННЯ";
         [ObservableProperty] private string topic = "Генератор титулок";
         [ObservableProperty] private string studentFullName = "Прізвище Ім'я По-батькові";
         [ObservableProperty] private string studentGroup = "КС-00";
@@ -35,7 +35,7 @@ namespace CourseWork_OOP
         [ObservableProperty] private bool isManualSource = true;
         [ObservableProperty] private bool isSheetSource = false;
         [ObservableProperty] private string spreadsheetId = "1dxJM2Gpj9YfyPVUEzMgQyjl4jc_QAF5U0sD2im8oxj4";
-        [ObservableProperty] private string sheetRange = "ООП!B5:H";
+        [ObservableProperty] private string sheetRange = "ООП!B4:O";
         [ObservableProperty] private bool isLatexSelected = true;
         [ObservableProperty] private bool isHtmlSelected = true;
         [ObservableProperty] private bool isPlainTextSelected = true;
@@ -99,7 +99,7 @@ namespace CourseWork_OOP
                         dataItem.University ??= this.University; dataItem.Faculty ??= this.Faculty; dataItem.Department ??= this.Department;
                         dataItem.Discipline ??= this.Discipline; dataItem.City ??= this.City; dataItem.Year = this.Year;
                         if (dataItem.CommissionMemberNames == null || !dataItem.CommissionMemberNames.Any())
-                        { dataItem.CommissionMemberNames = new List<string> { "Онищенко Б.О", "Порубльов І.М", "Гребенович Ю.Є" }; }
+                        { dataItem.CommissionMemberNames = new List<string> { "???", "???", "???" }; }
                     }
                 }
                 else { StatusMessage = "Джерело даних не вибрано."; return; }
