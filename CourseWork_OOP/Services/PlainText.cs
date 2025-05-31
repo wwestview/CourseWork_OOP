@@ -51,22 +51,19 @@ namespace CourseWork_OOP.Services
         {
             _context.AppendLine(CenterLine("Міністерство освіти і науки України"));
             _context.AppendLine(CenterLine(GetText(data.University))); 
-            _context.AppendLine();
         }
 
         protected override void BuildFacultyAndDepartment(TitlePageData data)
         {
             _context.AppendLine(Indent(14) + $"Факультет {GetText(data.Faculty)}");
             _context.AppendLine(Indent(14) + $"Кафедра {GetText(data.Department)}");
-            _context.AppendLine(); _context.AppendLine(); _context.AppendLine();
+            _context.AppendLine(); _context.AppendLine(); _context.AppendLine();_context.AppendLine();_context.AppendLine();
         }
 
         protected override void BuildWorkTitle(TitlePageData data)
         {
             string workType = "КУРСОВА РОБОТА";
             string subjectType = GetText(data.Discipline, "");
-            if (subjectType.ToLower().Contains("програмування") && subjectType.ToLower().Contains("об’єктно-орієнтованого")) workType = $"КУРСОВА РОБОТА З ОБ’ЄКТНО-ОРІЄНТОВАНОГО ПРОГРАМУВАННЯ";
-            else if (!string.IsNullOrEmpty(subjectType)) workType = $"КУРСОВА РОБОТА З ДИСЦИПЛІНИ «{subjectType}»";
             _context.AppendLine(CenterLine(workType));
             _context.AppendLine(CenterLine($"на тему «{GetText(data.Topic)}»"));
             _context.AppendLine(); _context.AppendLine();
@@ -81,10 +78,8 @@ namespace CourseWork_OOP.Services
             _context.AppendLine(rightIndent + $"{studentLabel} {GetText(data.CourseNumber, "2")} курсу,");
             _context.AppendLine(rightIndent + $"групи {GetText(data.Group)}");
             _context.AppendLine(rightIndent + $"{GetText(data.SpecialtyName, "спеціальності 121 «Інженерія програмного забезпечення»")}");
-            _context.AppendLine();
             _context.AppendLine(rightIndent + $"{GetText(data.StudentsFullName)}");
             _context.AppendLine(rightIndent + $"(прізвище та ініціали)");
-            _context.AppendLine(); _context.AppendLine();
             _context.AppendLine(rightIndent + $"Керівник:  {GetText(data.SuperVisorPosition)}, {GetText(data.SuperVisorFullName)}");
             _context.AppendLine(rightIndent + $"(посада, вчене звання, науковий ступінь, прізвище та ініціали)");
             _context.AppendLine(); _context.AppendLine();
@@ -101,17 +96,26 @@ namespace CourseWork_OOP.Services
 
         protected override void BuildCommissionMembers(TitlePageData data)
         {
-            int rightBlockIndent = 47;
+            int rightBlockIndent = 49;
             string rightIndent = Indent(rightBlockIndent);
-            string commissionIndent = Indent(rightBlockIndent + 2); 
+            string commissionIndent = Indent(rightBlockIndent + 2);
 
-            _context.AppendLine(rightIndent + $"  Члени комісії:"); 
-            _context.AppendLine();
+
             string sigLine = "______________"; string piiLinePlaceholder = "________________________"; string spacing = "        "; 
             string subSig = "(підпис)";
-            int subSigPad = (sigLine.Length - subSig.Length) / 2;
+            int subSigPad = ((sigLine.Length - subSig.Length) / 2);
+            int subSigPad0 = 10;
+            string subSigLine0 = new string(' ', Math.Max(0, subSigPad0)) + subSig;
             string subSigLine = new string(' ', Math.Max(0, subSigPad)) + subSig;
-            for (int i = 0; i < 3; i++)
+            string memberName0 = piiLinePlaceholder;
+            if (data.CommissionMemberNames != null && data.CommissionMemberNames.Count > 0 && !string.IsNullOrWhiteSpace(data.CommissionMemberNames[0]))
+            {
+                memberName0 = GetText(data.CommissionMemberNames[0]).PadRight(piiLinePlaceholder.Length);
+            }
+
+            _context.AppendLine((Indent(rightBlockIndent-16)  + $"Члени комісії:    {sigLine}{spacing}{memberName0.Substring(0, Math.Min(memberName0.Length, piiLinePlaceholder.Length))}"));
+            _context.AppendLine(Indent(rightBlockIndent-5) + $"{subSigLine0}{new string(' ', spacing.Length + Math.Max(0, (piiLinePlaceholder.Length - subSigLine.Trim().Length)))}");
+            for (int i = 1; i < 3; i++)
             {
                 string memberName = piiLinePlaceholder;
                 if (data.CommissionMemberNames != null && i < data.CommissionMemberNames.Count && !string.IsNullOrWhiteSpace(data.CommissionMemberNames[i]))
@@ -119,9 +123,7 @@ namespace CourseWork_OOP.Services
                     memberName = GetText(data.CommissionMemberNames[i]).PadRight(piiLinePlaceholder.Length);
                 }
                 _context.AppendLine(commissionIndent + $"{sigLine}{spacing}{memberName.Substring(0, Math.Min(memberName.Length, piiLinePlaceholder.Length))}");
-                // Спроба відтворити логіку для другого (підпис) з вашого коду PlainText
                 _context.AppendLine(commissionIndent + $"{subSigLine}{new string(' ', spacing.Length + Math.Max(0, (piiLinePlaceholder.Length - subSigLine.Trim().Length)))}");
-                if (i < 2) _context.AppendLine();
             }
         }
 

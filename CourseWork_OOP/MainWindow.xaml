@@ -49,25 +49,25 @@
                 </Grid.RowDefinitions>
 
                 <Label Grid.Row="0" Grid.Column="0" Content="Spreadsheet ID:" VerticalAlignment="Center" IsEnabled="{Binding IsSheetSource}"/>
-                <TextBox Grid.Row="0" Grid.Column="1" Margin="5,2" Text="{Binding SpreadsheetId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsSheetSource}"/>
+                <TextBox Grid.Row="0" Grid.Column="1" Margin="5,2" Text="{Binding SpreadsheetId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" IsEnabled="{Binding IsSheetSource}"/>
 
                 <Label Grid.Row="1" Grid.Column="0" Content="Діапазон (Аркуш!A2:G):" VerticalAlignment="Center" IsEnabled="{Binding IsSheetSource}"/>
-                <TextBox Grid.Row="1" Grid.Column="1" Margin="5,2" Text="{Binding SheetRange, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsSheetSource}"/>
+                <TextBox Grid.Row="1" Grid.Column="1" Margin="5,2" Text="{Binding SheetRange, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" IsEnabled="{Binding IsSheetSource}"/>
 
                 <Label Grid.Row="2" Grid.Column="0" Content="Університет:" VerticalAlignment="Center" IsEnabled="{Binding IsManualSource}"/>
-                <TextBox Grid.Row="2" Grid.Column="1" Margin="5,2" Text="{Binding University, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsManualSource}"/>
+                <TextBox Grid.Row="2" Grid.Column="1" Margin="5,2" Text="{Binding University, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" IsEnabled="{Binding IsManualSource}"/>
 
                 <Label Grid.Row="3" Grid.Column="0" Content="Факультет:" VerticalAlignment="Center" IsEnabled="{Binding IsManualSource}"/>
-                <TextBox Grid.Row="3" Grid.Column="1" Margin="5,2" Text="{Binding Faculty, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsManualSource}"/>
+                <TextBox Grid.Row="3" Grid.Column="1" Margin="5,2" Text="{Binding Faculty, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" IsEnabled="{Binding IsManualSource}"/>
 
                 <Label Grid.Row="4" Grid.Column="0" Content="Кафедра:" VerticalAlignment="Center" IsEnabled="{Binding IsManualSource}"/>
-                <TextBox Grid.Row="4" Grid.Column="1" Margin="5,2" Text="{Binding Department, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsManualSource}"/>
+                <TextBox Grid.Row="4" Grid.Column="1" Margin="5,2" Text="{Binding Department, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" IsEnabled="{Binding IsManualSource}"/>
 
                 <Label Grid.Row="5" Grid.Column="0" Content="Дисципліна:" VerticalAlignment="Center" IsEnabled="{Binding IsManualSource}"/>
-                <TextBox Grid.Row="5" Grid.Column="1" Margin="5,2" Text="{Binding Discipline, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsManualSource}"/>
+                <TextBox Grid.Row="5" Grid.Column="1" Margin="5,2" Text="{Binding Discipline, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" IsEnabled="{Binding IsManualSource}"/>
 
                 <Label Grid.Row="6" Grid.Column="0" Content="Тема роботи:" VerticalAlignment="Center" IsEnabled="{Binding IsManualSource}"/>
-                <TextBox Grid.Row="6" Grid.Column="1" Margin="5,2" Text="{Binding Topic, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsManualSource}"/>
+                <TextBox Grid.Row="6" Grid.Column="1" Margin="5,2" Text="{Binding Topic, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" IsEnabled="{Binding IsManualSource}"/>
 
                 <Label Grid.Row="7" Grid.Column="0" Content="Стать студента:" VerticalAlignment="Center" IsEnabled="{Binding IsManualSource}"/>
                 <StackPanel Grid.Row="7" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="5,2" IsEnabled="{Binding IsManualSource}">
@@ -76,31 +76,31 @@
                 </StackPanel>
 
                 <Label Grid.Row="8" Grid.Column="0" Content="ПІБ студента:" VerticalAlignment="Center" IsEnabled="{Binding IsManualSource}"/>
-                <TextBox Grid.Row="8" Grid.Column="1" Margin="5,2" Text="{Binding StudentFullName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsManualSource}"/>
+                <TextBox Grid.Row="8" Grid.Column="1" Margin="5,2" Text="{Binding StudentFullName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" IsEnabled="{Binding IsManualSource}"/>
 
                 <Label Grid.Row="9" Grid.Column="0" Content="Курс:" VerticalAlignment="Center" IsEnabled="{Binding IsManualSource}"/>
-                <TextBox Grid.Row="9" Grid.Column="1" Margin="5,2" Text="{Binding CourseNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsManualSource}"/>
+                <TextBox Grid.Row="9" Grid.Column="1" Margin="5,2" Text="{Binding CourseNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" IsEnabled="{Binding IsManualSource}"/>
 
                 <Label Grid.Row="10" Grid.Column="0" Content="Група студента:" VerticalAlignment="Center" IsEnabled="{Binding IsManualSource}"/>
-                <TextBox Grid.Row="10" Grid.Column="1" Margin="5,2" Text="{Binding StudentGroup, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsManualSource}"/>
+                <TextBox Grid.Row="10" Grid.Column="1" Margin="5,2" Text="{Binding StudentGroup, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" IsEnabled="{Binding IsManualSource}"/>
 
                 <Label Grid.Row="11" Grid.Column="0" Content="Спеціальність (повністю):" VerticalAlignment="Center" IsEnabled="{Binding IsManualSource}"/>
-                <TextBox Grid.Row="11" Grid.Column="1" Margin="5,2" Text="{Binding SpecialtyName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsManualSource}"/>
+                <TextBox Grid.Row="11" Grid.Column="1" Margin="5,2" Text="{Binding SpecialtyName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" IsEnabled="{Binding IsManualSource}"/>
 
                 <Label Grid.Row="12" Grid.Column="0" Content="ПІБ керівника:" VerticalAlignment="Center" IsEnabled="{Binding IsManualSource}"/>
-                <TextBox Grid.Row="12" Grid.Column="1" Margin="5,2" Text="{Binding SupervisorFullName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsManualSource}"/>
+                <TextBox Grid.Row="12" Grid.Column="1" Margin="5,2" Text="{Binding SupervisorFullName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" IsEnabled="{Binding IsManualSource}"/>
 
                 <Label Grid.Row="13" Grid.Column="0" Content="Посада керівника:" VerticalAlignment="Center" IsEnabled="{Binding IsManualSource}"/>
-                <TextBox Grid.Row="13" Grid.Column="1" Margin="5,2" Text="{Binding SupervisorPosition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsManualSource}"/>
+                <TextBox Grid.Row="13" Grid.Column="1" Margin="5,2" Text="{Binding SupervisorPosition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" IsEnabled="{Binding IsManualSource}"/>
 
                 <Label Grid.Row="14" Grid.Column="0" VerticalAlignment="Top" Margin="0,5,0,0" Content="Члени комісії (ПІБ):&#x0a;(кожен з нового рядка,&#x0a;макс. 3)" IsEnabled="{Binding IsManualSource}"/>
                 <TextBox Grid.Row="14" Grid.Column="1" Margin="5,2" MinHeight="60" Text="{Binding CommissionInputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsManualSource}" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
 
                 <Label Grid.Row="15" Grid.Column="0" Content="Місто:" VerticalAlignment="Center" IsEnabled="{Binding IsManualSource}"/>
-                <TextBox Grid.Row="15" Grid.Column="1" Margin="5,2" Text="{Binding City, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsManualSource}"/>
+                <TextBox Grid.Row="15" Grid.Column="1" Margin="5,2" Text="{Binding City, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" IsEnabled="{Binding IsManualSource}"/>
 
                 <Label Grid.Row="16" Grid.Column="0" Content="Рік:" VerticalAlignment="Center" IsEnabled="{Binding IsManualSource}"/>
-                <TextBox Grid.Row="16" Grid.Column="1" Margin="5,2" Text="{Binding Year, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsManualSource}"/>
+                <TextBox Grid.Row="16" Grid.Column="1" Margin="5,2" Text="{Binding Year, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" IsEnabled="{Binding IsManualSource}"/>
             </Grid>
 
             <GroupBox Header="Формати для Генерації" Grid.Row="2" Margin="0,10,0,10">
@@ -113,8 +113,8 @@
             </GroupBox>
 
             <Button Grid.Row="3" Content="Згенерувати Титульні Сторінки"
-            Command="{Binding GenerateCoverPagesCommand}"
-            HorizontalAlignment="Center" VerticalAlignment="Center" Padding="10,5" Margin="0,5,0,5"/>
+                    Command="{Binding GenerateCoverPagesCommand}"
+                    HorizontalAlignment="Center" VerticalAlignment="Center" Padding="10,5" Margin="0,5,0,5"/>
 
             <StatusBar Grid.Row="4">
                 <StatusBarItem>

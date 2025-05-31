@@ -88,21 +88,21 @@ namespace CourseWork_OOP.Services
         protected override void BuildFacultyAndDepartment(TitlePageData data)
         {
             AddStyledParagraph($"Факультет {GetText(data.Faculty, "Факультет не вказано")}", alignment: "CENTER", fontSize: NORMAL_FONT_SIZE);
-            AddStyledParagraph($"Кафедра {GetText(data.Department, "Кафедру не вказано")}", alignment: "CENTER", fontSize: NORMAL_FONT_SIZE, spaceAfter: 25);
+            AddStyledParagraph($"Кафедра {GetText(data.Department, "Кафедру не вказано")}", alignment: "CENTER", fontSize: NORMAL_FONT_SIZE, spaceAfter: 75);
         }
 
         protected override void BuildWorkTitle(TitlePageData data)
         {
-            AddStyledParagraph($"КУРСОВА РОБОТА З «{GetText(data.Discipline, "НАЗВА ДИСЦИПЛІНИ").ToUpperInvariant()}»", alignment: "CENTER", fontSize: NORMAL_FONT_SIZE); 
-            AddStyledParagraph($"на тему: «{GetText(data.Topic, "Тема не вказана")}»", alignment: "CENTER", fontSize: NORMAL_FONT_SIZE, spaceAfter: 50); 
+            AddStyledParagraph($"КУРСОВА РОБОТА З {GetText(data.Discipline, "НАЗВА ДИСЦИПЛІНИ").ToUpperInvariant()}", alignment: "CENTER", fontSize: NORMAL_FONT_SIZE); 
+            AddStyledParagraph($"на тему: «{GetText(data.Topic, "Тема не вказана")}»", alignment: "CENTER", fontSize: NORMAL_FONT_SIZE, spaceAfter: 20); 
         }
 
         protected override void BuildStudentAndSupervisor(TitlePageData data)
         {
             string studentLabel = (GetText(data.Sex) == "Жін") ? "Студентки" : "Студента";
             AddStyledParagraph($"{studentLabel} {GetText(data.CourseNumber, "X")} курсу, групи {GetText(data.Group, "XXXX")}", alignment: "END", fontSize: NORMAL_FONT_SIZE);
-            AddStyledParagraph(GetText(data.SpecialtyName, "Спеціальність не вказана"), alignment: "END", fontSize: NORMAL_FONT_SIZE);
-            AddStyledParagraph(GetText(data.StudentsFullName, "ПІБ Студента"), alignment: "END", fontSize: NORMAL_FONT_SIZE, spaceAfter: 18); 
+            AddStyledParagraph("спеціальності"+GetText(data.SpecialtyName, "Спеціальність не вказана"), alignment: "END", fontSize: NORMAL_FONT_SIZE);
+            AddStyledParagraph(GetText(data.StudentsFullName, "ПІБ Студента"), alignment: "END", fontSize: NORMAL_FONT_SIZE, spaceAfter: 0); 
             AddStyledParagraph($"Керівник: {GetText(data.SuperVisorPosition, "Посада керівника")}, {GetText(data.SuperVisorFullName, "ПІБ Керівника")}", alignment: "END", fontSize: NORMAL_FONT_SIZE);
             AddStyledParagraph("\t(посада, вчене звання, науковий ступінь, прізвище та ініціали)", alignment: "END", fontSize: SMALL_FONT_SIZE, spaceAfter: 30);
         }
@@ -115,36 +115,48 @@ namespace CourseWork_OOP.Services
 
         protected override void BuildCommissionMembers(TitlePageData data)
         {
-            AddStyledParagraph("Члени комісії:", alignment: "START", fontSize: NORMAL_FONT_SIZE, spaceAfter: 8);
-            string fixedSignatureLine = new string('_', 25);
-            string piiPlaceholderLine = new string('_', 25);
-            string signatureLabelText = "\t\t\t\t\t\t(підпис)"; 
-            string tabsToShiftPii = "\t\t\t\t";
+            const int signatureLength = 18;
+            const int nameFieldLength = 35; 
+            const string labelLine = "(підпис)\t\t";
 
-            for (int i = 0; i < 3; i++)
+            string GetNameOrUnderscore(int index)
             {
-                string piiFieldText;
-                if (data.CommissionMemberNames != null && i < data.CommissionMemberNames.Count && !string.IsNullOrWhiteSpace(data.CommissionMemberNames[i]))
+                if (data.CommissionMemberNames != null && index < data.CommissionMemberNames.Count)
                 {
-                    piiFieldText = GetText(data.CommissionMemberNames[i]);
+                    string name = GetText(data.CommissionMemberNames[index]);
+                    return name.PadRight(nameFieldLength, ' ');
                 }
                 else
                 {
-                    piiFieldText = piiPlaceholderLine;
+                    return new string('_', nameFieldLength);
                 }
-                string line1Text = $"{tabsToShiftPii}{fixedSignatureLine}{"    "}{piiFieldText}";
-                AddStyledParagraph(line1Text, alignment: "START", fontSize: NORMAL_FONT_SIZE, spaceAfter: 1);
+            }
 
-                int labelIndentSpaces = 0;
-                if (fixedSignatureLine.Length > signatureLabelText.Length)
-                { 
-                    labelIndentSpaces = (fixedSignatureLine.Length - signatureLabelText.Length) / 2;
+            for (int i = 0; i < 3; i++)
+            {
+                string line;
+                if (i == 0)
+                {
+                    line = $"Члени комісії:  {new string('_', signatureLength)}    {GetNameOrUnderscore(i)}";
                 }
-                if (labelIndentSpaces < 0) labelIndentSpaces = 0;
-                string labelLineText = $"{new string(' ', labelIndentSpaces)}{signatureLabelText}";
-                AddStyledParagraph(labelLineText, alignment: "START", fontSize: SMALL_FONT_SIZE, spaceAfter: (i < 2) ? 10.0 : 4.0);
+                else if (i == 1)
+                {
+                    line = $"                        {new string('_', signatureLength)}    {GetNameOrUnderscore(i)}";
+                }
+                else
+                {
+                    line = $"                          {new string('_', signatureLength)}    {GetNameOrUnderscore(i)}";
+                }
+
+                AddStyledParagraph(line, alignment: "CENTER", fontSize: NORMAL_FONT_SIZE, spaceAfter: 1);
+
+                string underSignature = $"{new string(' ', 16)}{labelLine}"; 
+                AddStyledParagraph(underSignature, alignment: "CENTER", fontSize: SMALL_FONT_SIZE, spaceAfter: (i < 2) ? 10.0 : 4.0);
             }
         }
+
+
+
 
         protected override void BuildFooter(TitlePageData data)
         {

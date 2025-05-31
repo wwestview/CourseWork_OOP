@@ -66,7 +66,7 @@ namespace CourseWork_OOP.Services
 
         protected override void BuildFacultyAndDepartment(TitlePageData data)
         {
-            _sb.AppendLine(@"\vspace{0.8cm}");
+            _sb.AppendLine(@"\vspace{0.0cm}");
             _sb.AppendLine(@"\begin{center}");
             _sb.AppendLine($@"Факультет {EscapeLatex(GetText(data.Faculty, "Факультет не вказано"))} \\");
             _sb.AppendLine($@"Кафедра {EscapeLatex(GetText(data.Department, "Кафедру не вказано"))}");
@@ -75,7 +75,7 @@ namespace CourseWork_OOP.Services
 
         protected override void BuildWorkTitle(TitlePageData data)
         {
-            _sb.AppendLine(@"\vspace{1.2cm}");
+            _sb.AppendLine(@"\vspace{3.2cm}");
             _sb.AppendLine(@"\begin{center}");
             _sb.AppendLine($@"\large КУРСОВА РОБОТА З {{«{EscapeLatex(GetText(data.Discipline, "НАЗВА ДИСЦИПЛІНИ").ToUpperInvariant())}»}} \\[4pt]");
             _sb.AppendLine($@"на тему «{{{EscapeLatex(GetText(data.Topic, "Тема не вказана"))}}}»"); 
@@ -89,7 +89,7 @@ namespace CourseWork_OOP.Services
             string studentLabel = (GetText(data.Sex) == "Жін") ? "Студентки" : "Студента";
             _sb.AppendLine($@"{studentLabel} {EscapeLatex(GetText(data.CourseNumber, "X"))} курсу, групи {EscapeLatex(GetText(data.Group, "XXXX"))} \\");
             _sb.AppendLine($@"{EscapeLatex(GetText(data.SpecialtyName, "Спеціальність не вказана"))} \\");
-            _sb.AppendLine($@"{{{EscapeLatex(GetText(data.StudentsFullName, "ПІБ Студента"))}}} \\[1cm]"); 
+            _sb.AppendLine($@"{{{EscapeLatex(GetText(data.StudentsFullName, "ПІБ Студента"))}}} \\[0cm]"); 
             _sb.AppendLine($@"Керівник:\hspace{{0.5em}}{EscapeLatex(GetText(data.SuperVisorPosition, "Посада керівника"))} , {EscapeLatex(GetText(data.SuperVisorFullName, "ПІБ Керівника"))} \\");
             _sb.AppendLine(@"\footnotesize (посада, вчене звання, науковий ступінь, прізвище та ініціали)");
             _sb.AppendLine(@"\end{flushright}");
