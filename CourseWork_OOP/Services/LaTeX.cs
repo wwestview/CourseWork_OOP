@@ -77,7 +77,7 @@ namespace CourseWork_OOP.Services
         {
             _sb.AppendLine(@"\vspace{3.2cm}");
             _sb.AppendLine(@"\begin{center}");
-            _sb.AppendLine($@"\large КУРСОВА РОБОТА З {{«{EscapeLatex(GetText(data.Discipline, "НАЗВА ДИСЦИПЛІНИ").ToUpperInvariant())}»}} \\[4pt]");
+            _sb.AppendLine($@"\large КУРСОВА РОБОТА З {{{EscapeLatex(GetText(data.Discipline, "НАЗВА ДИСЦИПЛІНИ").ToUpperInvariant())}}} \\[4pt]");
             _sb.AppendLine($@"на тему «{{{EscapeLatex(GetText(data.Topic, "Тема не вказана"))}}}»"); 
             _sb.AppendLine(@"\end{center}");
         }
@@ -90,7 +90,7 @@ namespace CourseWork_OOP.Services
             _sb.AppendLine($@"{studentLabel} {EscapeLatex(GetText(data.CourseNumber, "X"))} курсу, групи {EscapeLatex(GetText(data.Group, "XXXX"))} \\");
             _sb.AppendLine($@"{EscapeLatex(GetText(data.SpecialtyName, "Спеціальність не вказана"))} \\");
             _sb.AppendLine($@"{{{EscapeLatex(GetText(data.StudentsFullName, "ПІБ Студента"))}}} \\[0cm]"); 
-            _sb.AppendLine($@"Керівник:\hspace{{0.5em}}{EscapeLatex(GetText(data.SuperVisorPosition, "Посада керівника"))} , {EscapeLatex(GetText(data.SuperVisorFullName, "ПІБ Керівника"))} \\");
+            _sb.AppendLine($@"Керівник:\hspace{{0.5em}}{EscapeLatex(GetText(data.SuperVisorPosition, "Посада керівника"))} {EscapeLatex(GetText(data.SuperVisorFullName, "ПІБ Керівника"))} \\");
             _sb.AppendLine(@"\footnotesize (посада, вчене звання, науковий ступінь, прізвище та ініціали)");
             _sb.AppendLine(@"\end{flushright}");
         }

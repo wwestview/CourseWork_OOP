@@ -94,7 +94,7 @@ namespace CourseWork_OOP.Services
         protected override void BuildWorkTitle(TitlePageData data)
         {
             AddStyledParagraph($"КУРСОВА РОБОТА З {GetText(data.Discipline, "НАЗВА ДИСЦИПЛІНИ").ToUpperInvariant()}", alignment: "CENTER", fontSize: NORMAL_FONT_SIZE); 
-            AddStyledParagraph($"на тему: «{GetText(data.Topic, "Тема не вказана")}»", alignment: "CENTER", fontSize: NORMAL_FONT_SIZE, spaceAfter: 20); 
+            AddStyledParagraph($"на тему: {GetText(data.Topic, "Тема не вказана")}", alignment: "CENTER", fontSize: NORMAL_FONT_SIZE, spaceAfter: 20); 
         }
 
         protected override void BuildStudentAndSupervisor(TitlePageData data)
@@ -103,7 +103,7 @@ namespace CourseWork_OOP.Services
             AddStyledParagraph($"{studentLabel} {GetText(data.CourseNumber, "X")} курсу, групи {GetText(data.Group, "XXXX")}", alignment: "END", fontSize: NORMAL_FONT_SIZE);
             AddStyledParagraph("спеціальності"+GetText(data.SpecialtyName, "Спеціальність не вказана"), alignment: "END", fontSize: NORMAL_FONT_SIZE);
             AddStyledParagraph(GetText(data.StudentsFullName, "ПІБ Студента"), alignment: "END", fontSize: NORMAL_FONT_SIZE, spaceAfter: 0); 
-            AddStyledParagraph($"Керівник: {GetText(data.SuperVisorPosition, "Посада керівника")}, {GetText(data.SuperVisorFullName, "ПІБ Керівника")}", alignment: "END", fontSize: NORMAL_FONT_SIZE);
+            AddStyledParagraph($"Керівник: {GetText(data.SuperVisorPosition, "Посада керівника")} {GetText(data.SuperVisorFullName, "ПІБ Керівника")}", alignment: "END", fontSize: NORMAL_FONT_SIZE);
             AddStyledParagraph("\t(посада, вчене звання, науковий ступінь, прізвище та ініціали)", alignment: "END", fontSize: SMALL_FONT_SIZE, spaceAfter: 30);
         }
 

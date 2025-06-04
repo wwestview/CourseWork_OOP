@@ -58,7 +58,7 @@ namespace CourseWork_OOP.Services
         protected override void BuildWorkTitle(TitlePageData data)
         {
             _context.AppendLine("    <div class=\"block-title\">");
-            _context.AppendLine($"      <p class=\"large\">КУРСОВА РОБОТА З «{EncHtml(GetText(data.Discipline, "ДИЦСИПЛІНА").ToUpperInvariant())}»</p>");
+            _context.AppendLine($"      <p class=\"large\">КУРСОВА РОБОТА З {EncHtml(GetText(data.Discipline, "ДИЦСИПЛІНА").ToUpperInvariant())}</p>");
             _context.AppendLine($"      <p>на тему «{EncHtml(GetText(data.Topic, "..."))}»</p>");
             _context.AppendLine("    </div>");
         }
@@ -74,7 +74,7 @@ namespace CourseWork_OOP.Services
             _context.AppendLine($"        <p class=\"pii-line\" style=\"margin-top: 0.0cm;\">{EncHtml(GetText(data.StudentsFullName, "ПІБ Студента"))}</p>");
             _context.AppendLine("      </div>");
             _context.AppendLine("      <div>");
-            _context.AppendLine($"        <p class=\"no-wrap\" style=\"margin-left: 6cm;\">Керівник:{nbsp}{nbsp}{EncHtml(GetText(data.SuperVisorPosition, "[Посада]"))}, {EncHtml(GetText(data.SuperVisorFullName, "[ПІБ Керівника]"))}</p>");
+            _context.AppendLine($"        <p class=\"no-wrap\" style=\"margin-left: 6cm;\">Керівник:{nbsp}{nbsp}{EncHtml(GetText(data.SuperVisorPosition, "[Посада]"))} {EncHtml(GetText(data.SuperVisorFullName, "[ПІБ Керівника]"))}</p>");
             _context.AppendLine($"        <p class=\"small\" style=\"text-align:right;margin-right: 0.1cm;\">(посада, вчене звання, науковий ступінь, прізвище та ініціали)</p>");
             _context.AppendLine("      </div>");
             _context.AppendLine("    </div>");
@@ -115,7 +115,7 @@ namespace CourseWork_OOP.Services
         protected override void BuildFooter(TitlePageData data)
         {
             _context.AppendLine("    <div class=\"footer\">");
-            _context.AppendLine($"      <p>{EncHtml(GetText(data.City, "Місто"))} - {EncHtml(GetText(data.Year.ToString(), DateTime.Now.Year.ToString()))} рік</p>");
+            _context.AppendLine($"      <p>{EncHtml(GetText(data.City, "Місто"))} – {EncHtml(GetText(data.Year.ToString(), DateTime.Now.Year.ToString()))} рік</p>");
             _context.AppendLine("    </div>");
         }
 

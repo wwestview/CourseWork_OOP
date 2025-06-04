@@ -30,13 +30,7 @@ namespace CourseWork_OOP.Services
             int padLeft = (totalWidth - text.Length) / 2;
             return new string(' ', Math.Max(0, padLeft)) + text;
         }
-        private string AlignRight(string text, int totalWidth = -1)
-        {
-            if (totalWidth == -1) totalWidth = _pageWidth;
-            if (string.IsNullOrEmpty(text)) return new string(' ', totalWidth);
-            return text.PadLeft(totalWidth);
-        }
-        private string AlignLeft(string text) { return text; } 
+      
         private string Indent(int spaces) => new string(' ', spaces);
 
 
@@ -64,7 +58,7 @@ namespace CourseWork_OOP.Services
         {
             string workType = "КУРСОВА РОБОТА";
             string subjectType = GetText(data.Discipline, "");
-            _context.AppendLine(CenterLine(workType));
+            _context.AppendLine(CenterLine(workType + subjectType));
             _context.AppendLine(CenterLine($"на тему «{GetText(data.Topic)}»"));
             _context.AppendLine(); _context.AppendLine();
         }
@@ -79,8 +73,7 @@ namespace CourseWork_OOP.Services
             _context.AppendLine(rightIndent + $"групи {GetText(data.Group)}");
             _context.AppendLine(rightIndent + $"{GetText(data.SpecialtyName, "спеціальності 121 «Інженерія програмного забезпечення»")}");
             _context.AppendLine(rightIndent + $"{GetText(data.StudentsFullName)}");
-            _context.AppendLine(rightIndent + $"(прізвище та ініціали)");
-            _context.AppendLine(rightIndent + $"Керівник:  {GetText(data.SuperVisorPosition)}, {GetText(data.SuperVisorFullName)}");
+            _context.AppendLine(rightIndent + $"Керівник:  {GetText(data.SuperVisorPosition)} {GetText(data.SuperVisorFullName)}");
             _context.AppendLine(rightIndent + $"(посада, вчене звання, науковий ступінь, прізвище та ініціали)");
             _context.AppendLine(); _context.AppendLine();
         }
@@ -130,7 +123,7 @@ namespace CourseWork_OOP.Services
         protected override void BuildFooter(TitlePageData data)
         {
             _context.AppendLine(); _context.AppendLine(); _context.AppendLine();
-            _context.AppendLine(CenterLine($"{GetText(data.City)} - {GetText(data.Year.ToString())} рік"));
+            _context.AppendLine(CenterLine($"{GetText(data.City)} – {GetText(data.Year.ToString())} рік"));
         }
 
         protected override async Task FinalizeAndPersistOutputAsync(TitlePageData data, string argument)
